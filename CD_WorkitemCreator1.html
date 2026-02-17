@@ -3,48 +3,43 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EMEA PS - WorkItem Creator</title>
+  <title>EMEA PS — WorkItem Creator</title>
   <style>
-    /* ── Reset & tokens ─────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --label-col : 220px;
-      --radius    : 8px;
-      --border    : #d0d7de;
-      --accent    : #0061A8;
-      --accent-hov: #004e8c;
-      --bg        : #f6f8fa;
-      --surface   : #ffffff;
-      --text      : #1a1a2e;
-      --muted     : #6e7781;
-      --success   : #1a7f37;
-      --error     : #cf222e;
-      --warn-bg   : #fff8c5;
-      --warn-border: #d4a72c;
+      --label-col  : 220px;
+      --radius     : 8px;
+      --border     : #d0d7de;
+      --accent     : #0061A8;
+      --accent-hov : #004e8c;
+      --bg         : #f6f8fa;
+      --surface    : #ffffff;
+      --text       : #1a1a2e;
+      --muted      : #6e7781;
+      --success    : #1a7f37;
+      --error      : #cf222e;
     }
 
     body {
-      font-family: system-ui, "Segoe UI", Arial, sans-serif;
-      background : var(--bg);
-      color      : var(--text);
-      padding    : 24px 16px;
-      min-height : 100vh;
+      font-family : system-ui, "Segoe UI", Arial, sans-serif;
+      background  : var(--bg);
+      color       : var(--text);
+      padding     : 24px 16px;
+      min-height  : 100vh;
     }
 
-    /* ── Layout ─────────────────────────────────────────────────────── */
     .container { max-width: 760px; margin: 0 auto; }
 
     h1 {
-      font-size  : 1.5rem;
-      font-weight: 700;
-      margin-bottom: 24px;
+      font-size     : 1.5rem;
+      font-weight   : 700;
+      margin-bottom : 24px;
       padding-bottom: 12px;
-      border-bottom: 2px solid var(--accent);
-      color: var(--accent);
+      border-bottom : 2px solid var(--accent);
+      color         : var(--accent);
     }
 
-    /* ── Card ───────────────────────────────────────────────────────── */
     .card {
       background   : var(--surface);
       border       : 1px solid var(--border);
@@ -53,44 +48,33 @@
       margin-bottom: 20px;
     }
 
-    /* ── Form grid ──────────────────────────────────────────────────── */
-    .form-grid {
+    /* Work type selector row */
+    .selector-row {
       display              : grid;
       grid-template-columns: var(--label-col) 1fr;
-      gap                  : 14px 16px;
+      gap                  : 0 16px;
       align-items          : center;
+      margin-bottom        : 20px;
     }
-
-    .form-grid label {
+    .selector-row label {
       font-weight: 600;
       font-size  : 0.9rem;
     }
-
-
-
-    /* ── Button ─────────────────────────────────────────────────────── */
-    .btn {
-      display         : inline-block;
-      padding         : 10px 22px;
-      border          : none;
-      border-radius   : var(--radius);
-      font-size       : 0.95rem;
-      font-weight     : 600;
-      cursor          : pointer;
-      transition      : background .2s, transform .1s;
-    }
-    .btn-primary {
-      background: var(--accent);
-      color     : #fff;
-    }
-    .btn-primary:hover  { background: var(--accent-hov); }
-    .btn-primary:active { transform: scale(.98); }
-    .btn-primary:disabled {
-      background: #a0aec0;
-      cursor    : not-allowed;
+    .selector-row select {
+      width        : 100%;
+      padding      : 9px 10px;
+      border       : 1px solid var(--border);
+      border-radius: 6px;
+      font-size    : 0.9rem;
     }
 
-    /* ── Status / log panel ─────────────────────────────────────────── */
+    .section-divider {
+      border    : none;
+      border-top: 1px solid var(--border);
+      margin    : 0 0 20px 0;
+    }
+
+    /* Status banner */
     #statusBanner {
       display      : none;
       padding      : 12px 16px;
@@ -99,53 +83,40 @@
       margin-bottom: 16px;
       border       : 1px solid transparent;
     }
-    #statusBanner.success {
-      background  : #d4f5db;
-      border-color: var(--success);
-      color       : var(--success);
-    }
-    #statusBanner.error {
-      background  : #ffdcdc;
-      border-color: var(--error);
-      color       : var(--error);
-    }
-    #statusBanner.info {
-      background  : #daeeff;
-      border-color: var(--accent);
-      color       : var(--accent);
-    }
+    #statusBanner.success { background:#d4f5db; border-color:var(--success); color:var(--success); }
+    #statusBanner.error   { background:#ffdcdc; border-color:var(--error);   color:var(--error);   }
+    #statusBanner.info    { background:#daeeff; border-color:var(--accent);  color:var(--accent);  }
 
-    /* ── Debug log ──────────────────────────────────────────────────── */
-    details.debug-panel {
-      margin-top: 24px;
-      font-size : 0.8rem;
+    /* Button */
+    .btn {
+      padding      : 10px 22px;
+      border       : none;
+      border-radius: var(--radius);
+      font-size    : 0.95rem;
+      font-weight  : 600;
+      cursor       : pointer;
+      transition   : background .2s, transform .1s;
     }
-    details.debug-panel summary {
-      cursor     : pointer;
-      font-weight: 600;
-      color      : var(--muted);
-      user-select: none;
-      padding    : 4px 0;
-    }
-    #debugLog {
-      margin-top    : 8px;
-      background    : #1e1e2e;
-      color         : #cdd6f4;
-      border-radius : 6px;
-      padding       : 12px;
-      font-family   : "Cascadia Code", "Fira Code", monospace;
-      font-size     : 0.78rem;
-      max-height    : 320px;
-      overflow-y    : auto;
-      white-space   : pre-wrap;
-      word-break    : break-all;
-    }
-    .log-info  { color: #89dceb; }
-    .log-ok    { color: #a6e3a1; }
-    .log-warn  { color: #f9e2af; }
-    .log-error { color: #f38ba8; }
+    .btn-primary          { background: var(--accent);     color: #fff; }
+    .btn-primary:hover    { background: var(--accent-hov); }
+    .btn-primary:active   { transform: scale(.98); }
+    .btn-primary:disabled { background: #a0aec0; cursor: not-allowed; }
 
-    /* ── Auth overlay ────────────────────────────────────────────────── */
+    /* Spinner */
+    .spinner {
+      display       : inline-block;
+      width         : 18px;
+      height        : 18px;
+      border        : 3px solid rgba(0,97,168,.25);
+      border-top    : 3px solid var(--accent);
+      border-radius : 50%;
+      animation     : spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right  : 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Auth overlay */
     #authOverlay {
       display        : flex;
       flex-direction : column;
@@ -154,58 +125,54 @@
       padding        : 40px;
       gap            : 16px;
       text-align     : center;
+      color          : var(--muted);
     }
-    #authOverlay p { color: var(--muted); }
 
-    /* ── Spinner ─────────────────────────────────────────────────────── */
-    .spinner {
-      display     : inline-block;
-      width       : 20px;
-      height      : 20px;
-      border      : 3px solid rgba(0,97,168,.3);
-      border-top  : 3px solid var(--accent);
-      border-radius: 50%;
-      animation   : spin .7s linear infinite;
-      vertical-align: middle;
-      margin-right: 8px;
+    /* Debug log */
+    details.debug-panel         { margin-top: 24px; }
+    details.debug-panel summary { cursor:pointer; font-weight:600; color:var(--muted); user-select:none; padding:4px 0; }
+    #debugLog {
+      margin-top   : 8px;
+      background   : #1e1e2e;
+      color        : #cdd6f4;
+      border-radius: 6px;
+      padding      : 12px;
+      font-family  : "Cascadia Code", "Fira Code", monospace;
+      font-size    : 0.76rem;
+      max-height   : 320px;
+      overflow-y   : auto;
+      white-space  : pre-wrap;
+      word-break   : break-all;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Divider ─────────────────────────────────────────────────────── */
-    .section-divider {
-      border     : none;
-      border-top : 1px solid var(--border);
-      margin     : 20px 0;
-    }
+    .log-info  { color: #89dceb; }
+    .log-ok    { color: #a6e3a1; }
+    .log-warn  { color: #f9e2af; }
+    .log-error { color: #f38ba8; }
   </style>
 </head>
 <body>
 <div class="container">
 
-  <h1>EMEA PS — WorkItem Creator</h1>
+  <h1>EMEA PS &#8212; WorkItem Creator</h1>
 
-  <!-- Status banner -->
   <div id="statusBanner" role="alert"></div>
 
-  <!-- Main card: shown after auth -->
+  <!-- Main card (shown after auth) -->
   <div class="card" id="mainCard" style="display:none">
 
-    <!-- Work type selector -->
-    <div class="form-grid" style="margin-bottom:20px">
+    <div class="selector-row">
       <label for="workTypeSelect">Select Work Type:</label>
       <select id="workTypeSelect">
-        <option value="">— Select a Work Type —</option>
+        <option value="">&#8212; Select a Work Type &#8212;</option>
       </select>
     </div>
 
     <hr class="section-divider">
 
-    <!-- Dynamic attribute form -->
     <form id="workItemForm" novalidate>
       <div id="attributesContainer"></div>
-
-      <div style="margin-top:8px">
-        <button type="submit" id="submitBtn" class="btn btn-primary" disabled>
+      <div id="submitRow" style="margin-top:8px; display:none">
+        <button type="submit" id="submitBtn" class="btn btn-primary">
           Create Work Item
         </button>
       </div>
@@ -213,17 +180,17 @@
 
   </div>
 
-  <!-- Auth overlay: shown before auth -->
+  <!-- Auth overlay (shown before auth) -->
   <div class="card" id="authCard">
     <div id="authOverlay">
       <div class="spinner"></div>
-      <p id="authMessage">Checking authentication…</p>
+      <p id="authMessage">Checking authentication&#8230;</p>
     </div>
   </div>
 
-  <!-- Debug log (collapsed by default) -->
+  <!-- Debug log -->
   <details class="debug-panel" open>
-    <summary>🛠 Debug Log</summary>
+    <summary>&#x1F6E0; Debug Log</summary>
     <div id="debugLog"></div>
   </details>
 
@@ -231,202 +198,214 @@
 
 <script>
   /* ══════════════════════════════════════════════════════════════════
-     CONFIG  — edit these values only
+     CONFIG
   ══════════════════════════════════════════════════════════════════ */
   const CLIENT_ID    = '584c1e79-568e-4d71-91ff-3e00bf01d04b';
   const REGION       = 'euw2.pure.cloud';
-  const API_BASE     = `https://api.${REGION}`;
-  const AUTH_BASE    = `https://login.${REGION}`;
-  // REDIRECT_URI is derived at runtime so it works on any host
+  const API_BASE     = 'https://api.' + REGION;
+  const AUTH_BASE    = 'https://login.' + REGION;
   const REDIRECT_URI = window.location.origin + window.location.pathname;
+
+  let accessToken = '';
 
   /* ══════════════════════════════════════════════════════════════════
      DEBUG LOGGER
   ══════════════════════════════════════════════════════════════════ */
   const logEl = document.getElementById('debugLog');
 
-  function log(msg, level = 'info') {
+  function log(msg, level) {
+    level = level || 'info';
     const ts   = new Date().toISOString().slice(11, 23);
     const line = document.createElement('div');
-    line.className = `log-${level}`;
-    line.textContent = `[${ts}] ${msg}`;
+    line.className   = 'log-' + level;
+    line.textContent = '[' + ts + '] ' + msg;
     logEl.appendChild(line);
-    logEl.scrollTop = logEl.scrollHeight;
-    console[level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log'](msg);
+    logEl.scrollTop  = logEl.scrollHeight;
+    if (level === 'error') { console.error(msg); }
+    else if (level === 'warn') { console.warn(msg); }
+    else { console.log(msg); }
   }
 
   /* ══════════════════════════════════════════════════════════════════
      STATUS BANNER
   ══════════════════════════════════════════════════════════════════ */
-  function showStatus(msg, type = 'info') {
-    const el  = document.getElementById('statusBanner');
-    el.textContent  = msg;
-    el.className    = type;
+  function showStatus(msg, type) {
+    type = type || 'info';
+    const el         = document.getElementById('statusBanner');
+    el.textContent   = msg;
+    el.className     = type;
     el.style.display = 'block';
-    if (type === 'success') setTimeout(() => { el.style.display = 'none'; }, 6000);
+    if (type === 'success') {
+      setTimeout(function() { el.style.display = 'none'; }, 6000);
+    }
   }
 
   /* ══════════════════════════════════════════════════════════════════
      PKCE HELPERS
   ══════════════════════════════════════════════════════════════════ */
-
-  /** Generate a cryptographically random code verifier (43-128 chars) */
   function generateCodeVerifier() {
     const arr = new Uint8Array(64);
     crypto.getRandomValues(arr);
-    return btoa(String.fromCharCode(...arr))
+    return btoa(String.fromCharCode.apply(null, arr))
       .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   }
 
-  /** Derive code_challenge = BASE64URL(SHA-256(verifier)) */
   async function generateCodeChallenge(verifier) {
-    const encoder = new TextEncoder();
-    const data    = encoder.encode(verifier);
-    const digest  = await crypto.subtle.digest('SHA-256', data);
-    return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    const data   = new TextEncoder().encode(verifier);
+    const digest = await crypto.subtle.digest('SHA-256', data);
+    return btoa(String.fromCharCode.apply(null, new Uint8Array(digest)))
       .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   }
 
-  /** Kick off the PKCE authorisation redirect */
   async function redirectToGenesysOAuth() {
-    const verifier   = generateCodeVerifier();
-    const challenge  = await generateCodeChallenge(verifier);
-
-    // Persist verifier so we can use it after the redirect
+    const verifier  = generateCodeVerifier();
+    const challenge = await generateCodeChallenge(verifier);
     sessionStorage.setItem('pkce_verifier', verifier);
 
     const params = new URLSearchParams({
-      response_type          : 'code',
-      client_id              : CLIENT_ID,
-      redirect_uri           : REDIRECT_URI,
-      code_challenge         : challenge,
-      code_challenge_method  : 'S256',
+      response_type        : 'code',
+      client_id            : CLIENT_ID,
+      redirect_uri         : REDIRECT_URI,
+      code_challenge       : challenge,
+      code_challenge_method: 'S256',
     });
 
-    const authUrl = `${AUTH_BASE}/oauth/authorize?${params}`;
-    log(`Redirecting to Genesys PKCE auth: ${authUrl}`, 'info');
-    window.location.href = authUrl;
+    log('Redirecting to Genesys PKCE auth...', 'info');
+    window.location.href = AUTH_BASE + '/oauth/authorize?' + params.toString();
   }
 
-  /** Exchange the auth code for an access token */
   async function exchangeCodeForToken(code) {
     const verifier = sessionStorage.getItem('pkce_verifier');
     if (!verifier) {
-      throw new Error('PKCE verifier missing from sessionStorage — cannot exchange code.');
+      throw new Error('PKCE verifier missing from sessionStorage.');
     }
 
-    log('Exchanging authorisation code for access token…', 'info');
+    log('Exchanging authorisation code for access token...', 'info');
 
-    const body = new URLSearchParams({
-      grant_type    : 'authorization_code',
-      client_id     : CLIENT_ID,
-      code          : code,
-      redirect_uri  : REDIRECT_URI,
-      code_verifier : verifier,
-    });
-
-    const response = await fetch(`${AUTH_BASE}/oauth/token`, {
+    const response = await fetch(AUTH_BASE + '/oauth/token', {
       method : 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body,
+      body   : new URLSearchParams({
+        grant_type    : 'authorization_code',
+        client_id     : CLIENT_ID,
+        code          : code,
+        redirect_uri  : REDIRECT_URI,
+        code_verifier : verifier,
+      }),
     });
 
     const data = await response.json();
-
     if (!response.ok) {
-      log(`Token exchange failed (${response.status}): ${JSON.stringify(data)}`, 'error');
+      log('Token exchange failed (' + response.status + '): ' + JSON.stringify(data), 'error');
       throw new Error(data.error_description || 'Token exchange failed');
     }
 
-    sessionStorage.removeItem('pkce_verifier'); // clean up
-    log('Access token obtained successfully.', 'ok');
+    sessionStorage.removeItem('pkce_verifier');
+    log('Access token obtained.', 'ok');
     return data.access_token;
   }
 
   /* ══════════════════════════════════════════════════════════════════
-     GENESYS API HELPERS
+     API FETCH WRAPPER
   ══════════════════════════════════════════════════════════════════ */
-  let accessToken = '';
+  async function apiFetch(path, options) {
+    options = options || {};
+    const url = path.startsWith('http') ? path : API_BASE + path;
+    log('--> ' + (options.method || 'GET') + ' ' + url, 'info');
 
-  /** Thin fetch wrapper that handles auth errors and logs responses */
-  async function apiFetch(path, options = {}) {
-    const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
-    log(`→ ${options.method || 'GET'} ${url}`, 'info');
-
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
+    const response = await fetch(url, Object.assign({}, options, {
+      headers: Object.assign({
+        'Authorization': 'Bearer ' + accessToken,
         'Accept'       : 'application/json',
         'Content-Type' : 'application/json',
-        ...(options.headers || {}),
-      },
-    });
+      }, options.headers || {}),
+    }));
 
     const text = await response.text();
     let data;
-    try { data = JSON.parse(text); } catch { data = text; }
+    try { data = JSON.parse(text); } catch(e) { data = text; }
 
     if (!response.ok) {
-      log(`← ${response.status} ${response.statusText} | ${JSON.stringify(data)}`, 'error');
-      throw new Error(`API ${response.status}: ${response.statusText}`);
+      log('<-- ' + response.status + ' ' + response.statusText + ': ' + JSON.stringify(data), 'error');
+      throw new Error('API ' + response.status + ': ' + response.statusText);
     }
 
-    log(`← ${response.status} OK`, 'ok');
+    log('<-- ' + response.status + ' OK', 'ok');
     return data;
   }
 
-  /* ── Work Types ────────────────────────────────────────────────── */
+  /* ══════════════════════════════════════════════════════════════════
+     DATA FUNCTIONS
+     
+     Chain:
+       1. fetchWorkTypes()         Query endpoint — gets list of [{id, name}]
+       2. fetchWorktypeById(id)    Full worktype  — gives us worktype.schema.id
+       3. fetchSchema(schemaId)    Schema detail  — gives us jsonSchema.properties
+       4. createWorkItem(...)      POST to create
+  ══════════════════════════════════════════════════════════════════ */
+
   async function fetchWorkTypes() {
-    log('Fetching work types (filter: name BEGINS_WITH "CD")…', 'info');
+    log('Fetching work types matching "CD"...', 'info');
     const data = await apiFetch('/api/v2/taskmanagement/worktypes/query', {
       method: 'POST',
       body  : JSON.stringify({
         pageSize  : 30,
-        attributes: ['id', 'name', 'schemaId'],  // schemaId is the correct flat attribute name
+        attributes: ['id', 'name'],
         filters   : [{ name: 'name', type: 'string', operator: 'BEGINS_WITH', values: ['CD'] }],
       }),
     });
-
     const entities = data.entities || [];
-    log(`Received ${entities.length} work type(s).`, entities.length ? 'ok' : 'warn');
+    log('Got ' + entities.length + ' work type(s).', entities.length ? 'ok' : 'warn');
     return entities;
   }
 
-  /* ── Schema ────────────────────────────────────────────────────── */
-  async function fetchSchema(schemaId) {
-    log(`Fetching schema id=${schemaId}…`, 'info');
-    const data = await apiFetch(`/api/v2/taskmanagement/workitems/schemas/${schemaId}`);
-    // Log the full response so we can see exactly what was returned
-    log(`Schema raw response: ${JSON.stringify(data)}`, 'info');
-    // The schema can live at different depths depending on API version
-    const props = data?.jsonSchema?.properties
-                ?? data?.properties
-                ?? null;
-    if (!props) {
-      log('WARNING: Could not find .properties in schema response — check raw log above.', 'warn');
+  async function fetchWorktypeById(worktypeId) {
+    log('Fetching full worktype id=' + worktypeId + ' to get schema.id...', 'info');
+    const data = await apiFetch('/api/v2/taskmanagement/worktypes/' + worktypeId);
+    if (!data.schema || !data.schema.id) {
+      log('Worktype "' + data.name + '" has no schema attached.', 'warn');
     } else {
-      log(`Schema has ${Object.keys(props).length} properties: ${Object.keys(props).join(', ')}`, 'ok');
+      log('Worktype "' + data.name + '" has schema.id = ' + data.schema.id, 'ok');
     }
-    return { ...data, _resolvedProperties: props };
+    return data;
   }
 
-  /* ── Create Work Item ──────────────────────────────────────────── */
-  async function createWorkItem(workTypeId, formAttributes) {
-    // Separate the core "name" field from custom fields
-    const customFields = {};
-    Object.entries(formAttributes).forEach(([key, value]) => {
+  async function fetchSchema(schemaId) {
+    log('Fetching schema id=' + schemaId + '...', 'info');
+    const data = await apiFetch('/api/v2/taskmanagement/workitems/schemas/' + schemaId);
+
+    // Log the full raw response so the structure is always visible
+    log('Schema raw response: ' + JSON.stringify(data), 'info');
+
+    // Properties live at data.jsonSchema.properties (or data.properties as fallback)
+    const props = (data.jsonSchema && data.jsonSchema.properties)
+                ? data.jsonSchema.properties
+                : data.properties
+                || null;
+
+    if (!props) {
+      log('WARNING: no .properties found in schema response.', 'warn');
+    } else {
+      log('Schema properties found: ' + Object.keys(props).join(', '), 'ok');
+    }
+    return props;
+  }
+
+  async function createWorkItem(worktypeId, formAttributes) {
+    var customFields = {};
+    Object.keys(formAttributes).forEach(function(key) {
+      var value = formAttributes[key];
       if (key === 'name' || value === '') return;
-      customFields[key] = key.endsWith('_checkbox') ? value === 'on' : value;
+      customFields[key] = key.endsWith('_checkbox') ? (value === 'on') : value;
     });
 
-    const payload = {
-      typeId      : workTypeId,
+    var payload = {
+      typeId      : worktypeId,
       name        : formAttributes.name,
-      customFields,
+      customFields: customFields,
     };
 
-    log(`Creating work item: ${JSON.stringify(payload)}`, 'info');
+    log('Creating work item: ' + JSON.stringify(payload), 'info');
     return await apiFetch('/api/v2/taskmanagement/workitems', {
       method: 'POST',
       body  : JSON.stringify(payload),
@@ -436,195 +415,191 @@
   /* ══════════════════════════════════════════════════════════════════
      UI HELPERS
   ══════════════════════════════════════════════════════════════════ */
+  var INPUT_STYLE = 'width:100%; padding:9px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.9rem;';
+  var ROW_STYLE   = 'display:grid; grid-template-columns:var(--label-col) 1fr; gap:0 16px; align-items:center; margin-bottom:14px;';
+  var LABEL_STYLE = 'font-weight:600; font-size:0.9rem;';
 
-  function populateDropdown(workTypes) {
-    const sel = document.getElementById('workTypeSelect');
-    workTypes.forEach(wt => {
-      const opt       = document.createElement('option');
-      opt.value       = wt.id;
-      opt.textContent = wt.name;
-      // schemaId comes back as a flat string from the query API
-      opt.dataset.schemaId = wt.schemaId ?? '';
-      log(`  Work type: "${wt.name}" id=${wt.id} schemaId=${opt.dataset.schemaId}`, 'info');
-      sel.appendChild(opt);
-    });
-    log('Work type dropdown populated.', 'ok');
+  function makeLabel(forId, text) {
+    var l = document.createElement('label');
+    l.setAttribute('for', forId);
+    l.style.cssText = LABEL_STYLE;
+    l.textContent   = text;
+    return l;
   }
 
-  function renderSchemaAttributes(properties) {
-    const container = document.getElementById('attributesContainer');
-    container.innerHTML = '';
+  function buildRow(id, labelText, type, required) {
+    var row = document.createElement('div');
+    row.style.cssText = ROW_STYLE;
+    row.appendChild(makeLabel(id, labelText));
 
-    const keys = Object.keys(properties).filter(k => !k.startsWith('z_routing'));
-    log(`Rendering ${keys.length} schema attribute(s): ${keys.join(', ')}`, 'ok');
-
-    /* ── Workitem Name (always first) ── */
-    container.appendChild(buildTextRow('name', 'Workitem Name', true));
-
-    /* ── Dynamic schema fields ── */
-    keys.forEach(key => {
-      const attr = properties[key];
-      if (key.endsWith('_enum')) {
-        container.appendChild(buildSelectRow(key, attr));
-      } else if (key.endsWith('_checkbox')) {
-        container.appendChild(buildCheckboxRow(key, attr));
-      } else if (key.endsWith('_datetime')) {
-        container.appendChild(buildDateTimeRow(key, attr));
-      } else {
-        container.appendChild(buildTextRow(key, attr.title || key));
-      }
-    });
-
-    if (keys.length === 0) {
-      log('Schema had no custom properties after filtering z_routing fields.', 'warn');
-      const note = document.createElement('p');
-      note.style.cssText = 'color:var(--muted); font-size:0.85rem; margin-bottom:14px;';
-      note.textContent   = 'No custom attributes defined for this work type schema.';
-      container.appendChild(note);
-    }
-
-    document.getElementById('submitBtn').disabled = false;
-  }
-
-  /* ── Row builders ──────────────────────────────────────────────── */
-
-  function buildTextRow(id, labelText, required = false) {
-    const row   = makeRow();
-    const label = makeLabel(id, labelText);
-    const input = document.createElement('input');
-    input.type      = 'text';
-    input.id        = id;
-    input.name      = id;
-    input.required  = required;
-    input.style.cssText = 'width:100%; padding:9px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.9rem;';
-    row.appendChild(label);
-    row.appendChild(input);
+    var inp = document.createElement('input');
+    inp.type          = type || 'text';
+    inp.id            = id;
+    inp.name          = id;
+    inp.required      = required || false;
+    inp.style.cssText = INPUT_STYLE;
+    row.appendChild(inp);
     return row;
   }
 
   function buildSelectRow(id, attr) {
-    const row   = makeRow();
-    const label = makeLabel(id, attr.title);
-    const sel   = document.createElement('select');
-    sel.id       = id;
-    sel.name     = id;
-    sel.required = true;
-    sel.style.cssText = 'width:100%; padding:9px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.9rem;';
-    sel.innerHTML = '<option value="">Select…</option>';
-    (attr.enum || []).forEach(v => {
-      const opt       = document.createElement('option');
-      opt.value       = v;
-      opt.textContent = v;
+    var row = document.createElement('div');
+    row.style.cssText = ROW_STYLE;
+    row.appendChild(makeLabel(id, attr.title || id));
+
+    var sel = document.createElement('select');
+    sel.id            = id;
+    sel.name          = id;
+    sel.required      = true;
+    sel.style.cssText = INPUT_STYLE;
+    sel.innerHTML     = '<option value="">Select...</option>';
+    (attr.enum || []).forEach(function(v) {
+      var opt = document.createElement('option');
+      opt.value = v; opt.textContent = v;
       sel.appendChild(opt);
     });
-    row.appendChild(label);
     row.appendChild(sel);
     return row;
   }
 
   function buildCheckboxRow(id, attr) {
-    const row   = document.createElement('div');
-    row.style.cssText = 'display:flex; align-items:center; gap:10px; margin-bottom:14px; font-weight:600; font-size:0.9rem;';
-    const input = document.createElement('input');
-    input.type  = 'checkbox';
-    input.id    = id;
-    input.name  = id;
-    input.style.cssText = 'width:18px; height:18px; cursor:pointer; flex-shrink:0;';
-    const label = document.createElement('label');
-    label.setAttribute('for', id);
-    label.textContent = attr.title;
-    row.appendChild(input);
-    row.appendChild(label);
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; gap:10px; margin-bottom:14px;';
+
+    var inp = document.createElement('input');
+    inp.type          = 'checkbox';
+    inp.id            = id;
+    inp.name          = id;
+    inp.style.cssText = 'width:18px; height:18px; cursor:pointer; flex-shrink:0;';
+    row.appendChild(inp);
+    row.appendChild(makeLabel(id, attr.title || id));
     return row;
   }
 
-  function buildDateTimeRow(id, attr) {
-    const row   = makeRow();
-    const label = makeLabel(id, attr.title);
-    const input = document.createElement('input');
-    input.type  = 'datetime-local';
-    input.id    = id;
-    input.name  = id;
-    input.style.cssText = 'width:100%; padding:9px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.9rem;';
-    row.appendChild(label);
-    row.appendChild(input);
-    return row;
+  function populateDropdown(workTypes) {
+    var sel = document.getElementById('workTypeSelect');
+    workTypes.forEach(function(wt) {
+      var opt = document.createElement('option');
+      opt.value       = wt.id;   // worktype id only; schema resolved on demand
+      opt.textContent = wt.name;
+      sel.appendChild(opt);
+    });
+    log('Dropdown populated.', 'ok');
   }
 
-  function makeRow() {
-    const d = document.createElement('div');
-    // Each row is its own two-column grid: label | input
-    d.style.cssText = 'display:grid; grid-template-columns:var(--label-col) 1fr; gap:0 16px; align-items:center; margin-bottom:14px;';
-    return d;
-  }
+  function renderSchemaAttributes(properties) {
+    var container = document.getElementById('attributesContainer');
+    container.innerHTML = '';
 
-  function makeLabel(forId, text) {
-    const l = document.createElement('label');
-    l.setAttribute('for', forId);
-    l.textContent = text;
-    return l;
+    // Always show Name first
+    container.appendChild(buildRow('name', 'Workitem Name', 'text', true));
+
+    var keys = Object.keys(properties).filter(function(k) {
+      return !k.startsWith('z_routing');
+    });
+
+    log('Rendering ' + keys.length + ' custom field(s): ' + keys.join(', '), 'ok');
+
+    keys.forEach(function(key) {
+      var attr = properties[key];
+      if (key.endsWith('_enum')) {
+        container.appendChild(buildSelectRow(key, attr));
+      } else if (key.endsWith('_checkbox')) {
+        container.appendChild(buildCheckboxRow(key, attr));
+      } else if (key.endsWith('_datetime')) {
+        container.appendChild(buildRow(key, attr.title || key, 'datetime-local', false));
+      } else {
+        container.appendChild(buildRow(key, attr.title || key, 'text', false));
+      }
+    });
+
+    if (keys.length === 0) {
+      var note = document.createElement('p');
+      note.style.cssText = 'color:var(--muted); font-size:0.85rem; margin-bottom:14px;';
+      note.textContent   = 'No custom attributes defined for this work type.';
+      container.appendChild(note);
+    }
+
+    document.getElementById('submitRow').style.display = 'block';
   }
 
   /* ══════════════════════════════════════════════════════════════════
      EVENT WIRING
   ══════════════════════════════════════════════════════════════════ */
 
-  // Work type change → fetch schema → render fields
-  document.getElementById('workTypeSelect').addEventListener('change', async e => {
-    const selectedOpt = e.target.selectedOptions[0];
-    const schemaId    = selectedOpt?.dataset?.schemaId;
-    const container   = document.getElementById('attributesContainer');
-    const submitBtn   = document.getElementById('submitBtn');
+  /* Work type selected: fetch full worktype -> get schema.id -> fetch schema -> render */
+  document.getElementById('workTypeSelect').addEventListener('change', async function(e) {
+    var worktypeId = e.target.value;
+    var container  = document.getElementById('attributesContainer');
+    var submitRow  = document.getElementById('submitRow');
 
-    container.innerHTML = '';
-    submitBtn.disabled  = true;
+    container.innerHTML     = '';
+    submitRow.style.display = 'none';
 
-    if (!schemaId) {
-      log('No schemaId on selected option — cannot load attributes.', 'warn');
-      return;
-    }
+    if (!worktypeId) return;
 
-    // Show a loading indicator inside the form area
-    container.innerHTML = '<div style="padding:12px;color:var(--muted)"><span class="spinner"></span> Loading schema attributes…</div>';
+    container.innerHTML = '<div style="padding:10px 0; color:var(--muted)"><span class="spinner"></span> Loading attributes...</div>';
 
     try {
-      const schema     = await fetchSchema(schemaId);
-      const properties = schema._resolvedProperties || {};
+      // Step 2: full worktype gives schema.id
+      var worktype = await fetchWorktypeById(worktypeId);
+      var schemaId = worktype.schema && worktype.schema.id;
+
+      if (!schemaId) {
+        log('No schema on this worktype — showing name field only.', 'warn');
+        container.innerHTML = '';
+        container.appendChild(buildRow('name', 'Workitem Name', 'text', true));
+        submitRow.style.display = 'block';
+        return;
+      }
+
+      // Step 3: fetch schema properties
+      var properties = await fetchSchema(schemaId);
+
+      if (!properties) {
+        container.innerHTML = '<p style="color:var(--error); font-size:0.85rem;">Schema returned no properties — check the debug log.</p>';
+        return;
+      }
+
+      // Render the form fields
       renderSchemaAttributes(properties);
+
     } catch (err) {
       container.innerHTML = '';
-      log(`Failed to fetch schema: ${err.message}`, 'error');
-      showStatus(`Could not load schema: ${err.message}`, 'error');
+      log('Error loading schema: ' + err.message, 'error');
+      showStatus('Failed to load schema: ' + err.message, 'error');
     }
   });
 
-  // Form submit → create work item
-  document.getElementById('workItemForm').addEventListener('submit', async e => {
+  /* Form submit: collect values and create work item */
+  document.getElementById('workItemForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    const workTypeId = document.getElementById('workTypeSelect').value;
-    if (!workTypeId) {
+    var worktypeId = document.getElementById('workTypeSelect').value;
+    if (!worktypeId) {
       showStatus('Please select a Work Type.', 'error');
       return;
     }
 
-    const btn        = document.getElementById('submitBtn');
-    btn.disabled     = true;
-    btn.innerHTML    = '<span class="spinner"></span>Creating…';
+    var btn     = document.getElementById('submitBtn');
+    btn.disabled  = true;
+    btn.innerHTML = '<span class="spinner"></span>Creating...';
 
-    const formData   = new FormData(e.target);
-    const attributes = Object.fromEntries(formData.entries());
+    var formData   = new FormData(e.target);
+    var attributes = {};
+    formData.forEach(function(value, key) { attributes[key] = value; });
 
     try {
-      const result = await createWorkItem(workTypeId, attributes);
-      log(`Work item created: id=${result.id} name="${result.name}"`, 'ok');
-      showStatus(`✓ Work Item "${result.name}" created (id: ${result.id})`, 'success');
+      var result = await createWorkItem(worktypeId, attributes);
+      log('Work item created: id=' + result.id + ' name="' + result.name + '"', 'ok');
+      showStatus('Work Item "' + result.name + '" created (id: ' + result.id + ')', 'success');
       e.target.reset();
       document.getElementById('attributesContainer').innerHTML = '';
+      document.getElementById('submitRow').style.display = 'none';
       document.getElementById('workTypeSelect').value = '';
     } catch (err) {
-      log(`Work item creation failed: ${err.message}`, 'error');
-      showStatus(`Failed to create Work Item: ${err.message}`, 'error');
+      log('Work item creation failed: ' + err.message, 'error');
+      showStatus('Failed to create Work Item: ' + err.message, 'error');
     } finally {
       btn.disabled  = false;
       btn.innerHTML = 'Create Work Item';
@@ -635,74 +610,63 @@
      INIT
   ══════════════════════════════════════════════════════════════════ */
   async function init() {
-    log('App initialising…', 'info');
-    log(`Redirect URI: ${REDIRECT_URI}`, 'info');
+    log('App initialising...', 'info');
+    log('Redirect URI: ' + REDIRECT_URI, 'info');
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const code      = urlParams.get('code');
-    const authError = urlParams.get('error');
+    var urlParams = new URLSearchParams(window.location.search);
+    var code      = urlParams.get('code');
+    var authError = urlParams.get('error');
 
-    /* ── Auth error returned from Genesys ── */
     if (authError) {
-      const desc = urlParams.get('error_description') || authError;
-      log(`OAuth error from Genesys: ${desc}`, 'error');
-      showStatus(`Authentication error: ${desc}`, 'error');
-      document.getElementById('authMessage').textContent = `Auth error: ${desc}`;
+      var desc = urlParams.get('error_description') || authError;
+      log('OAuth error: ' + desc, 'error');
+      showStatus('Authentication error: ' + desc, 'error');
+      document.getElementById('authMessage').textContent = 'Auth error: ' + desc;
       return;
     }
 
-    /* ── PKCE code returned — exchange for token ── */
     if (code) {
-      // Strip the code from the URL bar (cosmetic, also prevents accidental re-use)
-      const cleanUrl = window.location.origin + window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
-
+      window.history.replaceState({}, document.title, window.location.origin + window.location.pathname);
       try {
         accessToken = await exchangeCodeForToken(code);
-        sessionStorage.setItem('gc_access_token', accessToken); // optional: cache token
-        showStatus('Authenticated successfully.', 'success');
+        sessionStorage.setItem('gc_access_token', accessToken);
+        showStatus('Authenticated.', 'success');
       } catch (err) {
-        log(`Token exchange error: ${err.message}`, 'error');
-        showStatus(`Authentication failed: ${err.message}`, 'error');
-        document.getElementById('authMessage').textContent = `Auth failed: ${err.message}`;
+        log('Token exchange error: ' + err.message, 'error');
+        showStatus('Authentication failed: ' + err.message, 'error');
+        document.getElementById('authMessage').textContent = 'Auth failed: ' + err.message;
         return;
       }
     } else {
-      /* ── Check for a previously cached token ── */
-      const cached = sessionStorage.getItem('gc_access_token');
+      var cached = sessionStorage.getItem('gc_access_token');
       if (cached) {
-        log('Reusing cached access token from sessionStorage.', 'info');
+        log('Reusing cached token.', 'info');
         accessToken = cached;
       } else {
-        /* ── No token at all — kick off PKCE flow ── */
-        log('No token found — starting PKCE authorisation flow.', 'info');
-        document.getElementById('authMessage').textContent = 'Redirecting to Genesys login…';
+        log('No token — starting PKCE flow.', 'info');
+        document.getElementById('authMessage').textContent = 'Redirecting to Genesys login...';
         await redirectToGenesysOAuth();
-        return; // page will redirect
+        return;
       }
     }
 
-    /* ── Authenticated: show main UI ── */
     document.getElementById('authCard').style.display = 'none';
     document.getElementById('mainCard').style.display = 'block';
-    showStatus('Loading work types…', 'info');
+    showStatus('Loading work types...', 'info');
 
     try {
-      const workTypes = await fetchWorkTypes();
-      if (workTypes.length === 0) {
-        showStatus('No work types found matching the "CD" prefix.', 'warn');
-        log('No work types returned. Check filter or permissions.', 'warn');
+      var workTypes = await fetchWorkTypes();
+      if (!workTypes.length) {
+        showStatus('No work types found with prefix "CD". Check permissions.', 'error');
         return;
       }
       populateDropdown(workTypes);
-      showStatus(`${workTypes.length} work type(s) loaded. Select one to begin.`, 'info');
+      showStatus(workTypes.length + ' work type(s) loaded — select one to begin.', 'info');
     } catch (err) {
-      log(`Failed to load work types: ${err.message}`, 'error');
-      showStatus(`Could not load work types: ${err.message}`, 'error');
-
-      // If we get a 401, the token may be stale — clear it and re-auth
-      if (err.message.includes('401')) {
-        log('401 received — clearing cached token and re-authenticating.', 'warn');
+      log('Failed to load work types: ' + err.message, 'error');
+      showStatus('Could not load work types: ' + err.message, 'error');
+      if (err.message.indexOf('401') !== -1) {
+        log('401 received — clearing token and re-authenticating.', 'warn');
         sessionStorage.removeItem('gc_access_token');
         await redirectToGenesysOAuth();
       }
