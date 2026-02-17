@@ -66,40 +66,7 @@
       font-size  : 0.9rem;
     }
 
-    .form-grid .full-row { grid-column: 1 / -1; }
 
-    .form-grid input[type="text"],
-    .form-grid input[type="datetime-local"],
-    .form-grid select {
-      width        : 100%;
-      padding      : 9px 10px;
-      border       : 1px solid var(--border);
-      border-radius: 6px;
-      font-size    : 0.9rem;
-      transition   : border-color .15s, box-shadow .15s;
-    }
-
-    .form-grid input:focus,
-    .form-grid select:focus {
-      outline     : none;
-      border-color: var(--accent);
-      box-shadow  : 0 0 0 3px rgba(0,97,168,.18);
-    }
-
-    /* Checkbox row */
-    .checkbox-row {
-      grid-column    : 1 / -1;
-      display        : flex;
-      align-items    : center;
-      gap            : 10px;
-      font-weight    : 600;
-      font-size      : 0.9rem;
-    }
-    .checkbox-row input[type="checkbox"] {
-      width : 18px;
-      height: 18px;
-      cursor: pointer;
-    }
 
     /* ── Button ─────────────────────────────────────────────────────── */
     .btn {
@@ -234,10 +201,10 @@
     <hr class="section-divider">
 
     <!-- Dynamic attribute form -->
-    <form id="workItemForm" class="form-grid" novalidate>
-      <div id="attributesContainer" class="form-grid full-row"></div>
+    <form id="workItemForm" novalidate>
+      <div id="attributesContainer"></div>
 
-      <div class="full-row" style="margin-top:8px">
+      <div style="margin-top:8px">
         <button type="submit" id="submitBtn" class="btn btn-primary" disabled>
           Create Work Item
         </button>
@@ -416,7 +383,7 @@
       method: 'POST',
       body  : JSON.stringify({
         pageSize  : 30,
-        attributes: ['id', 'name', 'schema'],   // 'schema' returns the full schema sub-object
+        attributes: ['id', 'name', 'schemaId'],  // schemaId is the correct flat attribute name
         filters   : [{ name: 'name', type: 'string', operator: 'BEGINS_WITH', values: ['CD'] }],
       }),
     });
@@ -430,10 +397,18 @@
   async function fetchSchema(schemaId) {
     log(`Fetching schema id=${schemaId}…`, 'info');
     const data = await apiFetch(`/api/v2/taskmanagement/workitems/schemas/${schemaId}`);
-    if (!data?.jsonSchema?.properties) {
-      log('Schema returned no jsonSchema.properties!', 'warn');
+    // Log the full response so we can see exactly what was returned
+    log(`Schema raw response: ${JSON.stringify(data)}`, 'info');
+    // The schema can live at different depths depending on API version
+    const props = data?.jsonSchema?.properties
+                ?? data?.properties
+                ?? null;
+    if (!props) {
+      log('WARNING: Could not find .properties in schema response — check raw log above.', 'warn');
+    } else {
+      log(`Schema has ${Object.keys(props).length} properties: ${Object.keys(props).join(', ')}`, 'ok');
     }
-    return data;
+    return { ...data, _resolvedProperties: props };
   }
 
   /* ── Create Work Item ──────────────────────────────────────────── */
@@ -468,8 +443,9 @@
       const opt       = document.createElement('option');
       opt.value       = wt.id;
       opt.textContent = wt.name;
-      // Stash the schemaId on the element so we don't need to look it up again
-      opt.dataset.schemaId = wt.schema?.id ?? wt.schemaId ?? '';
+      // schemaId comes back as a flat string from the query API
+      opt.dataset.schemaId = wt.schemaId ?? '';
+      log(`  Work type: "${wt.name}" id=${wt.id} schemaId=${opt.dataset.schemaId}`, 'info');
       sel.appendChild(opt);
     });
     log('Work type dropdown populated.', 'ok');
@@ -478,15 +454,16 @@
   function renderSchemaAttributes(properties) {
     const container = document.getElementById('attributesContainer');
     container.innerHTML = '';
-    log(`Rendering ${Object.keys(properties).length} schema attribute(s).`, 'info');
+
+    const keys = Object.keys(properties).filter(k => !k.startsWith('z_routing'));
+    log(`Rendering ${keys.length} schema attribute(s): ${keys.join(', ')}`, 'ok');
 
     /* ── Workitem Name (always first) ── */
     container.appendChild(buildTextRow('name', 'Workitem Name', true));
 
     /* ── Dynamic schema fields ── */
-    Object.entries(properties).forEach(([key, attr]) => {
-      if (key.startsWith('z_routing')) return; // internal routing fields — skip
-
+    keys.forEach(key => {
+      const attr = properties[key];
       if (key.endsWith('_enum')) {
         container.appendChild(buildSelectRow(key, attr));
       } else if (key.endsWith('_checkbox')) {
@@ -494,9 +471,17 @@
       } else if (key.endsWith('_datetime')) {
         container.appendChild(buildDateTimeRow(key, attr));
       } else {
-        container.appendChild(buildTextRow(key, attr.title));
+        container.appendChild(buildTextRow(key, attr.title || key));
       }
     });
+
+    if (keys.length === 0) {
+      log('Schema had no custom properties after filtering z_routing fields.', 'warn');
+      const note = document.createElement('p');
+      note.style.cssText = 'color:var(--muted); font-size:0.85rem; margin-bottom:14px;';
+      note.textContent   = 'No custom attributes defined for this work type schema.';
+      container.appendChild(note);
+    }
 
     document.getElementById('submitBtn').disabled = false;
   }
@@ -507,10 +492,11 @@
     const row   = makeRow();
     const label = makeLabel(id, labelText);
     const input = document.createElement('input');
-    input.type     = 'text';
-    input.id       = id;
-    input.name     = id;
-    input.required = required;
+    input.type      = 'text';
+    input.id        = id;
+    input.name      = id;
+    input.required  = required;
+    input.style.cssText = 'width:100%; padding:9px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.9rem;';
     row.appendChild(label);
     row.appendChild(input);
     return row;
@@ -523,6 +509,7 @@
     sel.id       = id;
     sel.name     = id;
     sel.required = true;
+    sel.style.cssText = 'width:100%; padding:9px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.9rem;';
     sel.innerHTML = '<option value="">Select…</option>';
     (attr.enum || []).forEach(v => {
       const opt       = document.createElement('option');
@@ -537,11 +524,12 @@
 
   function buildCheckboxRow(id, attr) {
     const row   = document.createElement('div');
-    row.className = 'checkbox-row full-row';
+    row.style.cssText = 'display:flex; align-items:center; gap:10px; margin-bottom:14px; font-weight:600; font-size:0.9rem;';
     const input = document.createElement('input');
     input.type  = 'checkbox';
     input.id    = id;
     input.name  = id;
+    input.style.cssText = 'width:18px; height:18px; cursor:pointer; flex-shrink:0;';
     const label = document.createElement('label');
     label.setAttribute('for', id);
     label.textContent = attr.title;
@@ -557,6 +545,7 @@
     input.type  = 'datetime-local';
     input.id    = id;
     input.name  = id;
+    input.style.cssText = 'width:100%; padding:9px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.9rem;';
     row.appendChild(label);
     row.appendChild(input);
     return row;
@@ -564,7 +553,8 @@
 
   function makeRow() {
     const d = document.createElement('div');
-    d.className = 'form-grid full-row';
+    // Each row is its own two-column grid: label | input
+    d.style.cssText = 'display:grid; grid-template-columns:var(--label-col) 1fr; gap:0 16px; align-items:center; margin-bottom:14px;';
     return d;
   }
 
@@ -583,18 +573,26 @@
   document.getElementById('workTypeSelect').addEventListener('change', async e => {
     const selectedOpt = e.target.selectedOptions[0];
     const schemaId    = selectedOpt?.dataset?.schemaId;
+    const container   = document.getElementById('attributesContainer');
+    const submitBtn   = document.getElementById('submitBtn');
+
+    container.innerHTML = '';
+    submitBtn.disabled  = true;
 
     if (!schemaId) {
-      document.getElementById('attributesContainer').innerHTML = '';
-      document.getElementById('submitBtn').disabled = true;
+      log('No schemaId on selected option — cannot load attributes.', 'warn');
       return;
     }
 
+    // Show a loading indicator inside the form area
+    container.innerHTML = '<div style="padding:12px;color:var(--muted)"><span class="spinner"></span> Loading schema attributes…</div>';
+
     try {
-      document.getElementById('submitBtn').disabled = true;
-      const schema = await fetchSchema(schemaId);
-      renderSchemaAttributes(schema.jsonSchema?.properties || {});
+      const schema     = await fetchSchema(schemaId);
+      const properties = schema._resolvedProperties || {};
+      renderSchemaAttributes(properties);
     } catch (err) {
+      container.innerHTML = '';
       log(`Failed to fetch schema: ${err.message}`, 'error');
       showStatus(`Could not load schema: ${err.message}`, 'error');
     }
