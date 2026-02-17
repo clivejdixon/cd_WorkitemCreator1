@@ -3,556 +3,715 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EMEA PS 02 - WorkItem Creator</title>
+  <title>EMEA PS - WorkItem Creator</title>
   <style>
-    * { box-sizing: border-box; }
-    :root { --label-col: 220px; }
+    /* ── Reset & tokens ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --label-col : 220px;
+      --radius    : 8px;
+      --border    : #d0d7de;
+      --accent    : #0061A8;
+      --accent-hov: #004e8c;
+      --bg        : #f6f8fa;
+      --surface   : #ffffff;
+      --text      : #1a1a2e;
+      --muted     : #6e7781;
+      --success   : #1a7f37;
+      --error     : #cf222e;
+      --warn-bg   : #fff8c5;
+      --warn-border: #d4a72c;
+    }
 
     body {
-      font-family: system-ui, Arial, sans-serif;
-      margin: 16px;
+      font-family: system-ui, "Segoe UI", Arial, sans-serif;
+      background : var(--bg);
+      color      : var(--text);
+      padding    : 24px 16px;
+      min-height : 100vh;
     }
 
-    .container {
-      max-width: 760px;
+    /* ── Layout ─────────────────────────────────────────────────────── */
+    .container { max-width: 760px; margin: 0 auto; }
+
+    h1 {
+      font-size  : 1.5rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--accent);
+      color: var(--accent);
     }
 
+    /* ── Card ───────────────────────────────────────────────────────── */
+    .card {
+      background   : var(--surface);
+      border       : 1px solid var(--border);
+      border-radius: var(--radius);
+      padding      : 24px;
+      margin-bottom: 20px;
+    }
+
+    /* ── Form grid ──────────────────────────────────────────────────── */
     .form-grid {
-      display: grid;
+      display              : grid;
       grid-template-columns: var(--label-col) 1fr;
-      gap: 12px 16px;
-      align-items: center;
-      width: 100%;
+      gap                  : 14px 16px;
+      align-items          : center;
     }
 
     .form-grid label {
       font-weight: 600;
+      font-size  : 0.9rem;
     }
+
+    .form-grid .full-row { grid-column: 1 / -1; }
 
     .form-grid input[type="text"],
     .form-grid input[type="datetime-local"],
-    .form-grid input[type="tel"],
     .form-grid select {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #d0d7de;
+      width        : 100%;
+      padding      : 9px 10px;
+      border       : 1px solid var(--border);
       border-radius: 6px;
+      font-size    : 0.9rem;
+      transition   : border-color .15s, box-shadow .15s;
     }
 
-    .full-row { grid-column: 1 / -1; }
-
-    button {
-      background-color: #007bff;
-      color: #fff;
-      border: 0;<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EMEA PS 01 - WorkItem Creator</title>
-  <style>
-    * { box-sizing: border-box; }
-    :root { --label-col: 220px; }
-
-    body {
-      font-family: system-ui, Arial, sans-serif;
-      margin: 16px;
+    .form-grid input:focus,
+    .form-grid select:focus {
+      outline     : none;
+      border-color: var(--accent);
+      box-shadow  : 0 0 0 3px rgba(0,97,168,.18);
     }
 
-    .container {
-      max-width: 760px;<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EMEA PS 02 - WorkItem Creator</title>
-  <style>
-    * { box-sizing: border-box; }
-    :root { --label-col: 220px; }
-
-    body {
-      font-family: system-ui, Arial, sans-serif;
-      margin: 16px;
+    /* Checkbox row */
+    .checkbox-row {
+      grid-column    : 1 / -1;
+      display        : flex;
+      align-items    : center;
+      gap            : 10px;
+      font-weight    : 600;
+      font-size      : 0.9rem;
     }
-
-    .container {
-      max-width: 760px;
-    }
-    }
-      border-radius: 8px;
-      padding: 10px 14px;
+    .checkbox-row input[type="checkbox"] {
+      width : 18px;
+      height: 18px;
       cursor: pointer;
     }
-    button:hover { background-color: #0056b3; }
+
+    /* ── Button ─────────────────────────────────────────────────────── */
+    .btn {
+      display         : inline-block;
+      padding         : 10px 22px;
+      border          : none;
+      border-radius   : var(--radius);
+      font-size       : 0.95rem;
+      font-weight     : 600;
+      cursor          : pointer;
+      transition      : background .2s, transform .1s;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color     : #fff;
+    }
+    .btn-primary:hover  { background: var(--accent-hov); }
+    .btn-primary:active { transform: scale(.98); }
+    .btn-primary:disabled {
+      background: #a0aec0;
+      cursor    : not-allowed;
+    }
+
+    /* ── Status / log panel ─────────────────────────────────────────── */
+    #statusBanner {
+      display      : none;
+      padding      : 12px 16px;
+      border-radius: var(--radius);
+      font-size    : 0.875rem;
+      margin-bottom: 16px;
+      border       : 1px solid transparent;
+    }
+    #statusBanner.success {
+      background  : #d4f5db;
+      border-color: var(--success);
+      color       : var(--success);
+    }
+    #statusBanner.error {
+      background  : #ffdcdc;
+      border-color: var(--error);
+      color       : var(--error);
+    }
+    #statusBanner.info {
+      background  : #daeeff;
+      border-color: var(--accent);
+      color       : var(--accent);
+    }
+
+    /* ── Debug log ──────────────────────────────────────────────────── */
+    details.debug-panel {
+      margin-top: 24px;
+      font-size : 0.8rem;
+    }
+    details.debug-panel summary {
+      cursor     : pointer;
+      font-weight: 600;
+      color      : var(--muted);
+      user-select: none;
+      padding    : 4px 0;
+    }
+    #debugLog {
+      margin-top    : 8px;
+      background    : #1e1e2e;
+      color         : #cdd6f4;
+      border-radius : 6px;
+      padding       : 12px;
+      font-family   : "Cascadia Code", "Fira Code", monospace;
+      font-size     : 0.78rem;
+      max-height    : 320px;
+      overflow-y    : auto;
+      white-space   : pre-wrap;
+      word-break    : break-all;
+    }
+    .log-info  { color: #89dceb; }
+    .log-ok    { color: #a6e3a1; }
+    .log-warn  { color: #f9e2af; }
+    .log-error { color: #f38ba8; }
+
+    /* ── Auth overlay ────────────────────────────────────────────────── */
+    #authOverlay {
+      display        : flex;
+      flex-direction : column;
+      align-items    : center;
+      justify-content: center;
+      padding        : 40px;
+      gap            : 16px;
+      text-align     : center;
+    }
+    #authOverlay p { color: var(--muted); }
+
+    /* ── Spinner ─────────────────────────────────────────────────────── */
+    .spinner {
+      display     : inline-block;
+      width       : 20px;
+      height      : 20px;
+      border      : 3px solid rgba(0,97,168,.3);
+      border-top  : 3px solid var(--accent);
+      border-radius: 50%;
+      animation   : spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Divider ─────────────────────────────────────────────────────── */
+    .section-divider {
+      border     : none;
+      border-top : 1px solid var(--border);
+      margin     : 20px 0;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>EMEA PS 02 - WorkItem Creator</h1>
+<div class="container">
 
-    <div class="form-grid" style="margin-bottom:16px">
+  <h1>EMEA PS — WorkItem Creator</h1>
+
+  <!-- Status banner -->
+  <div id="statusBanner" role="alert"></div>
+
+  <!-- Main card: shown after auth -->
+  <div class="card" id="mainCard" style="display:none">
+
+    <!-- Work type selector -->
+    <div class="form-grid" style="margin-bottom:20px">
       <label for="workTypeSelect">Select Work Type:</label>
       <select id="workTypeSelect">
-        <option value="">-- Select a Work Type --</option>
+        <option value="">— Select a Work Type —</option>
       </select>
     </div>
 
-    <form id="workItemFo<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EMEA PS 02 - WorkItem Creator</title>
-  <style>
-    * { box-sizing: border-box; }
-    :root { --label-col: 220px; }
+    <hr class="section-divider">
 
-    body {
-      font-family: system-ui, Arial, sans-serif;
-      margin: 16px;
-    }
-
-    .container {
-      max-width: 760px;
-    }rm" class="form-grid">
+    <!-- Dynamic attribute form -->
+    <form id="workItemForm" class="form-grid" novalidate>
       <div id="attributesContainer" class="form-grid full-row"></div>
-      <div class="full-row">
-        <button type="submit">Create Work Item</button>
-      </div><!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EMEA PS 02 - WorkItem Creator</title>
-  <style>
-    * { box-sizing: border-box; }
-    :root { --label-col: 220px; }
 
-    body {
-      font-family: system-ui, Arial, sans-serif;
-      margin: 16px;
-    }
-
-    .container {
-      max-width: 760px;
-    }
+      <div class="full-row" style="margin-top:8px">
+        <button type="submit" id="submitBtn" class="btn btn-primary" disabled>
+          Create Work Item
+        </button>
+      </div>
     </form>
+
   </div>
 
-  <script>
-    const CLIENT_ID = 'e9709cbb-144b-4e82-a3ea-5c0d305da6ee';
-	const CLIENT_SECRET = '';
-    const REGION = 'euw2.pure.cloud';
-    const API_BASE_URL = "https://api.euw2.pure.cloud";
-    const REDIRECT_URI = 'https://clivejdixon.github.io/cd_WorkitemCreator1/index.html';
+  <!-- Auth overlay: shown before auth -->
+  <div class="card" id="authCard">
+    <div id="authOverlay">
+      <div class="spinner"></div>
+      <p id="authMessage">Checking authentication…</p>
+    </div>
+  </div>
 
-    let accessToken = "";
+  <!-- Debug log (collapsed by default) -->
+  <details class="debug-panel" open>
+    <summary>🛠 Debug Log</summary>
+    <div id="debugLog"></div>
+  </details>
 
-    // Step 1: Authenticate and retrieve access token
-/*    async function authenticate() {
-      const response = await fetch("https://login.euw2.pure.cloud/oauth/token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          grant_type: "client_credentials",
-          client_id: CLIENT_ID,
-          client_secret: CLIENT_SECRET,
-        }),
-      });
-      const data = await response.json();
-      accessToken = data.access_token;
-    }*/
+</div>
 
-    function getAccessTokenFromUrl() {
-      const hash = window.location.hash;
-      if (!hash) return null;
-      const params = new URLSearchParams(hash.substring(1));
-      return params.get('access_token');
+<script>
+  /* ══════════════════════════════════════════════════════════════════
+     CONFIG  — edit these values only
+  ══════════════════════════════════════════════════════════════════ */
+  const CLIENT_ID    = '584c1e79-568e-4d71-91ff-3e00bf01d04b';
+  const REGION       = 'euw2.pure.cloud';
+  const API_BASE     = `https://api.${REGION}`;
+  const AUTH_BASE    = `https://login.${REGION}`;
+  // REDIRECT_URI is derived at runtime so it works on any host
+  const REDIRECT_URI = window.location.origin + window.location.pathname;
+
+  /* ══════════════════════════════════════════════════════════════════
+     DEBUG LOGGER
+  ══════════════════════════════════════════════════════════════════ */
+  const logEl = document.getElementById('debugLog');
+
+  function log(msg, level = 'info') {
+    const ts   = new Date().toISOString().slice(11, 23);
+    const line = document.createElement('div');
+    line.className = `log-${level}`;
+    line.textContent = `[${ts}] ${msg}`;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+    console[level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log'](msg);
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     STATUS BANNER
+  ══════════════════════════════════════════════════════════════════ */
+  function showStatus(msg, type = 'info') {
+    const el  = document.getElementById('statusBanner');
+    el.textContent  = msg;
+    el.className    = type;
+    el.style.display = 'block';
+    if (type === 'success') setTimeout(() => { el.style.display = 'none'; }, 6000);
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     PKCE HELPERS
+  ══════════════════════════════════════════════════════════════════ */
+
+  /** Generate a cryptographically random code verifier (43-128 chars) */
+  function generateCodeVerifier() {
+    const arr = new Uint8Array(64);
+    crypto.getRandomValues(arr);
+    return btoa(String.fromCharCode(...arr))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  }
+
+  /** Derive code_challenge = BASE64URL(SHA-256(verifier)) */
+  async function generateCodeChallenge(verifier) {
+    const encoder = new TextEncoder();
+    const data    = encoder.encode(verifier);
+    const digest  = await crypto.subtle.digest('SHA-256', data);
+    return btoa(String.fromCharCode(...new Uint8Array(digest)))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  }
+
+  /** Kick off the PKCE authorisation redirect */
+  async function redirectToGenesysOAuth() {
+    const verifier   = generateCodeVerifier();
+    const challenge  = await generateCodeChallenge(verifier);
+
+    // Persist verifier so we can use it after the redirect
+    sessionStorage.setItem('pkce_verifier', verifier);
+
+    const params = new URLSearchParams({
+      response_type          : 'code',
+      client_id              : CLIENT_ID,
+      redirect_uri           : REDIRECT_URI,
+      code_challenge         : challenge,
+      code_challenge_method  : 'S256',
+    });
+
+    const authUrl = `${AUTH_BASE}/oauth/authorize?${params}`;
+    log(`Redirecting to Genesys PKCE auth: ${authUrl}`, 'info');
+    window.location.href = authUrl;
+  }
+
+  /** Exchange the auth code for an access token */
+  async function exchangeCodeForToken(code) {
+    const verifier = sessionStorage.getItem('pkce_verifier');
+    if (!verifier) {
+      throw new Error('PKCE verifier missing from sessionStorage — cannot exchange code.');
     }
 
-    function redirectToGenesysOAuth() {
-      const authUrl = `https://login.${REGION}/oauth/authorize?response_type=token&client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
-      window.location.href = authUrl;
+    log('Exchanging authorisation code for access token…', 'info');
+
+    const body = new URLSearchParams({
+      grant_type    : 'authorization_code',
+      client_id     : CLIENT_ID,
+      code          : code,
+      redirect_uri  : REDIRECT_URI,
+      code_verifier : verifier,
+    });
+
+    const response = await fetch(`${AUTH_BASE}/oauth/token`, {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      log(`Token exchange failed (${response.status}): ${JSON.stringify(data)}`, 'error');
+      throw new Error(data.error_description || 'Token exchange failed');
     }
 
-    // Step 2: Fetch the list of work types
-    async function fetchWorkTypes() {
-      const response = await fetch(`${API_BASE_URL}/api/v2/taskmanagement/worktypes/query`, {
-        headers: {
-          "Authorization": `Bearer ${accessToken}`,
-          "Accept": 'application/json',
-          "Content-Type": 'application/json'
-        },
-		method: "POST",
-		body: JSON.stringify({ "pageSize": 30, "attributes": ["id", "name", "schemaId"], "filters": [{ "name": "name", "type": "string", "operator": "BEGINS_WITH", "values": ["CD"]}] })    
-      });
-      const <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EMEA PS 02 - WorkItem Creator</title>
-  <style>
-    * { box-sizing: border-box; }
-    :root { --label-col: 220px; }
+    sessionStorage.removeItem('pkce_verifier'); // clean up
+    log('Access token obtained successfully.', 'ok');
+    return data.access_token;
+  }
 
-    body {
-      font-family: system-ui, Arial, sans-serif;
-      margin: 16px;
+  /* ══════════════════════════════════════════════════════════════════
+     GENESYS API HELPERS
+  ══════════════════════════════════════════════════════════════════ */
+  let accessToken = '';
+
+  /** Thin fetch wrapper that handles auth errors and logs responses */
+  async function apiFetch(path, options = {}) {
+    const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
+    log(`→ ${options.method || 'GET'} ${url}`, 'info');
+
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept'       : 'application/json',
+        'Content-Type' : 'application/json',
+        ...(options.headers || {}),
+      },
+    });
+
+    const text = await response.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = text; }
+
+    if (!response.ok) {
+      log(`← ${response.status} ${response.statusText} | ${JSON.stringify(data)}`, 'error');
+      throw new Error(`API ${response.status}: ${response.statusText}`);
     }
 
-    .container {
-      max-width: 760px;
-    }data = await response.json();
-      return data.entities || [];
+    log(`← ${response.status} OK`, 'ok');
+    return data;
+  }
+
+  /* ── Work Types ────────────────────────────────────────────────── */
+  async function fetchWorkTypes() {
+    log('Fetching work types (filter: name BEGINS_WITH "CD")…', 'info');
+    const data = await apiFetch('/api/v2/taskmanagement/worktypes/query', {
+      method: 'POST',
+      body  : JSON.stringify({
+        pageSize  : 30,
+        attributes: ['id', 'name', 'schema'],   // 'schema' returns the full schema sub-object
+        filters   : [{ name: 'name', type: 'string', operator: 'BEGINS_WITH', values: ['CD'] }],
+      }),
+    });
+
+    const entities = data.entities || [];
+    log(`Received ${entities.length} work type(s).`, entities.length ? 'ok' : 'warn');
+    return entities;
+  }
+
+  /* ── Schema ────────────────────────────────────────────────────── */
+  async function fetchSchema(schemaId) {
+    log(`Fetching schema id=${schemaId}…`, 'info');
+    const data = await apiFetch(`/api/v2/taskmanagement/workitems/schemas/${schemaId}`);
+    if (!data?.jsonSchema?.properties) {
+      log('Schema returned no jsonSchema.properties!', 'warn');
     }
+    return data;
+  }
 
-    // Step 4: Fetch Schema
-    async function fetchSchema(schemaId) {
-      const url = `https://api.${REGION}/api/v2/taskmanagement/workitems/schemas/` + schemaId;
-      const response = await fetch(url, {
-        headers: { 
-          'Accept': 'application/json',
-		  'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-		},
-		method: "GET"
-	  });
-      if (!response.ok) throw new Error('API error: ' + response.statusText, );
-      const data = await response.json();
-      return data || [];
-    }
+  /* ── Create Work Item ──────────────────────────────────────────── */
+  async function createWorkItem(workTypeId, formAttributes) {
+    // Separate the core "name" field from custom fields
+    const customFields = {};
+    Object.entries(formAttributes).forEach(([key, value]) => {
+      if (key === 'name' || value === '') return;
+      customFields[key] = key.endsWith('_checkbox') ? value === 'on' : value;
+    });
 
-    // Step 4: Populate the Work Type dropdown
-    async function populateWorkTypeDropdown() {
-      const workTypes = await fetchWorkTypes();
-      const workTypeSelect = document.getElementById("workTypeSelect");
+    const payload = {
+      typeId      : workTypeId,
+      name        : formAttributes.name,
+      customFields,
+    };
 
-      workTy<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EMEA PS 02 - WorkItem Creator</title>
-  <style>
-    * { box-sizing: border-box; }
-    :root { --label-col: 220px; }
+    log(`Creating work item: ${JSON.stringify(payload)}`, 'info');
+    return await apiFetch('/api/v2/taskmanagement/workitems', {
+      method: 'POST',
+      body  : JSON.stringify(payload),
+    });
+  }
 
-    body {
-      font-family: system-ui, Arial, sans-serif;
-      margin: 16px;
-    }
+  /* ══════════════════════════════════════════════════════════════════
+     UI HELPERS
+  ══════════════════════════════════════════════════════════════════ */
 
-    .container {
-      max-width: 760px;
-    }pes.forEach((workType) => {
-        const option = document.createElement("option");
-        option.value = workType.id;
-        option.textContent = workType.name;
-        workTypeSelect.appendChild(option);
-      });
+  function populateDropdown(workTypes) {
+    const sel = document.getElementById('workTypeSelect');
+    workTypes.forEach(wt => {
+      const opt       = document.createElement('option');
+      opt.value       = wt.id;
+      opt.textContent = wt.name;
+      // Stash the schemaId on the element so we don't need to look it up again
+      opt.dataset.schemaId = wt.schema?.id ?? wt.schemaId ?? '';
+      sel.appendChild(opt);
+    });
+    log('Work type dropdown populated.', 'ok');
+  }
 
-      // Handle Work Type selection
-      workTypeSelect.addEventListener("change", async(e) => {
-        const selectedWorkType = workTypes.find((type) => type.id === e.target.value);
-		const schemaId = selectedWorkType.schema.id;
-        const schemaWorktype = await fetchSchema(schemaId);
-//		renderSchemaAttributes(selectedWorkType?.schema?.attributes || {});
-		renderSchemaAttributes(schemaWorktype.jsonSchema.properties || {});
-      });
-    }
+  function renderSchemaAttributes(properties) {
+    const container = document.getElementById('attributesContainer');
+    container.innerHTML = '';
+    log(`Rendering ${Object.keys(properties).length} schema attribute(s).`, 'info');
 
-    // Step 5: Render Schema Attributes dynamically
-    function renderSchemaAttributes(attributes) {
-      const attributesContainer = document.getElementById("attributesContainer");
-      attributesContainer.innerHTML = "";
+    /* ── Workitem Name (always first) ── */
+    container.appendChild(buildTextRow('name', 'Workitem Name', true));
 
-      // Work item name
-      const nameRow = document.createElement("div");
-      nameRow.className = "form-grid full-row";
-      const <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EMEA PS 02 - WorkItem Creator</title>
-  <style>
-    * { box-sizing: border-box; }
-    :root { --label-col: 220px; }
+    /* ── Dynamic schema fields ── */
+    Object.entries(properties).forEach(([key, attr]) => {
+      if (key.startsWith('z_routing')) return; // internal routing fields — skip
 
-    body {
-      font-family: system-ui, Arial, sans-serif;
-      margin: 16px;
-    }
-
-    .container {
-      max-width: 760px;
-    }nameLabel = document.createElement("label");
-      nameLabel.textContent = "Workitem Name";
-      nameLabel.setAttribute("for", "name");
-      const nameInput = document.createElement("input");
-      nameInput.type = "text";
-      nameInput.id = "name";
-      nameInput.name = "name";
-      nameInput.required = true;
-      nameRow.appendChild(nameLabel);
-      nameRo<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EMEA PS 02 - WorkItem Creator</title>
-  <style>
-    * { box-sizing: border-box; }
-    :root { --label-col: 220px; }
-
-    body {
-      font-family: system-ui, Arial, sans-serif;
-      margin: 16px;
-    }
-
-    .container {
-      max-width: 760px;
-    }w.appendChild(nameInput);
-      attributesContainer.appendChild(nameRow);
-
-      Object.keys(attributes).forEach((key) => {
-        if (key.startsWith("z_routing")) return;
-
-        const attribute = attributes[key];
-        const row = document.createElement("div");
-        row.className = "form-grid full-row";
-
-        let label = document.createElement("label");
-        label.textContent = attribute.title;
-        label.setAttribute("for", key);
-
-        let input;
-        if (key === "request_type_enum" || key === "urgency_enum") {
-          input = document.createElement("select");
-          input.name = key;
-          input.id = key;
-          input.required = true;
-          input.innerHTML = '<option value="">Select...</option>';
-          (attribute.enum || []).forEach(v => {
-            const opt = document.createElement("option");
-            opt.value = v; opt.textContent = v; input.appendChild(opt);
-          });
-        } else if (key === "completed_checkbox") {
-          const wrapper = document.createElement("label");
-          wrapper.className = "full-row";
-          wrapper.style.display = "flex";
-          wrapper.style.alignItems = "center";
-          wrapper.style.gap = "8px";
-
-          input = document.createElement("input");
-          input.type = "checkbox";
-          input.name = key;
-          input.id = key;
-
-          wrapper.appendChild(input);
-          wrapper.appendChild(document.createTextNode(attribute.title));
-          attributesContainer.appendChild(wrapper);
-          return;
-        } else if (key === "appointment_datetime") {
-          input = document.createElement("input");
-          input.type = "datetime-local";
-          input.name = key;
-          input.id = key;
-        } else {
-          input = document.createElement("input");
-          inp<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EMEA PS 02 - WorkItem Creator</title>
-  <style>
-    * { box-sizing: border-box; }
-    :root { --label-col: 220px; }
-
-    body {
-      font-family: system-ui, Arial, sans-serif;
-      margin: 16px;
-    }
-
-    .container {
-      max-width: 760px;
-    }ut.type = "text";
-          input.name = key;
-          input.id = key;
-        }
-
-        row.appendChild(label);
-        row.appendChild(input);
-        attributesContainer.appendChild(row);
-      });
-    }
-/*	
-    function renderSchemaAttributes(attributes) {
-      const attributesContainer = document.getElementById("attributesContainer");
-      attributesContainer.innerHTML = ""; // Clear existing attributes
-	  const attributeDiv = document.createElement("div");
-	  const label = document.createElement("label");
-	  label.textContent = "Workitem Name";
-//	  label.setAttribute("for", "name");
-
-	  const input = document.createElement("input");
-	  input.type = "text";
-	  input.value = "";
-//	  input.id = "Name";
-//	  input.name = "name";
-	  input.required = true;
-	  
-	  attributeDiv.appendChild(label);
-	  attributeDiv.appendChild(input);
-	  attributesContainer.appendChild(attributeDiv);
-      
-	  Object.keys(attributes).forEach((key) => {
-        const attribute = attributes[key];
-		if (!key.startsWith("z_routing")) {
-			const attributeArray = key.split("_");
-			const attributeType = attributeArray[1];
-			const attributeDiv = document.createElement("div");
-
-			const label = document.createElement("label");
-			label.textContent = attribute.title;
-			label.setAttribute("for", key);
-			let input;
-			
-			if (key == "request_type_enum") {
-			  input = document.createElement('select');
-			  input.name = key;
-			  input.id = key;
-			  input.required = true;
-			  input.innerHTML = '<option value="">Select...</option>';
-			  (attribute.enum || []).forEach(val => {
-				const opt = document.createElement('option');
-				opt.value = val;
-			<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EMEA PS 02 - WorkItem Creator</title>
-  <style>
-    * { box-sizing: border-box; }
-    :root { --label-col: 220px; }
-
-    body {
-      font-family: system-ui, Arial, sans-serif;
-      margin: 16px;
-    }
-
-    .container {
-      max-width: 760px;
-    }	opt.textContent = val;
-				input.appendChild(opt);
-			  });
-			} else if (key == "urgency_enum") {
-			  input = document.createElement('select');
-			  input.name = key;
-			  input.id = key;
-			  input.required = true;
-			  input.innerHTML = '<option value="">Select...</option>';
-			  (attribute.enum || []).forEach(val => {
-				const opt = document.createElement('option');
-				opt.value = val;
-				opt.textContent = val;
-				input.appendChild(opt);
-			  });
-			} else if (key == "completed_checkbox") {
-			  input = document.createElement('input');
-			  input.type = 'checkbox';
-			  input.name = key;
-			  input.id = key;
-			} else if (key == "appointment_datetime") {
-			  input = document.createElement('input');
-			  input.type = 'datetime-local';
-			  input.name = key;
-			  input.id = key;
-			} else {
-				input = document.createElement("input");
-				input.type = "text";
-				input.id = key;
-				input.name = key;
-			}
-		//  input.required = attribute.required;
-			attributeDiv.appendChild(label);
-			attributeDiv.appendChild(input);
-			attributesContainer.appendChild(attributeDiv);
-		}
-      });
-    }
-*/
-    // Step 5: Create a Work Item
-    async function createWorkItem(workTypeId, attributes) {
-	  const jsonCustomFields = {};
-	  Object.keys(attributes).forEach(key => {
-		if(attributes[key] !== '' && key != 'name') {
-			if(key.endsWith("_checkbox")) {
-			  jsonCustomFields[key] = (attributes[key] == "on") ? true : false;
-			} else {
-			  jsonCustomFields[key] = attributes[key];
-			}
-		}
-      });
-      const response = await fetch(`${API_BASE_URL}/api/v2/taskmanagement/workitems`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          typeId: workTypeId,
-          name: attributes.name,
-		  customFields: jsonCustomFields
-        }),
-      });
-      const data = await response.json();
-      return data;
-    }
-
-    // Step 6: Handle form submission
-    document.getElementById("workItemForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const workTypeId = document.getElementById("workTypeSelect").value;
-      if (!workTypeId) {
-        alert("Please select a Work Type.");
-        return;
-      }
-
-      const formData = new FormData(e.target);
-      const attributes = {};
-      formData.forEach((value, key) => {
-        attributes[key] = value;
-      });
-
-      try {
-        const result = await createWorkItem(workTypeId, attributes);
-        alert("Work Item created successfully!");
-        console.log(result);
-      } catch (error) {
-        console.error("Error creating Work Item:", error);
-        alert("Failed to create Work Item. Check console for details.");
+      if (key.endsWith('_enum')) {
+        container.appendChild(buildSelectRow(key, attr));
+      } else if (key.endsWith('_checkbox')) {
+        container.appendChild(buildCheckboxRow(key, attr));
+      } else if (key.endsWith('_datetime')) {
+        container.appendChild(buildDateTimeRow(key, attr));
+      } else {
+        container.appendChild(buildTextRow(key, attr.title));
       }
     });
 
-    // Initialize the application
-    async function init() {
-//      await authenticate();
-      accessToken = getAccessTokenFromUrl();
-      if (!accessToken) {
-        redirectToGenesysOAuth();
-        return;
-      }
-      await populateWorkTypeDropdown();
+    document.getElementById('submitBtn').disabled = false;
+  }
+
+  /* ── Row builders ──────────────────────────────────────────────── */
+
+  function buildTextRow(id, labelText, required = false) {
+    const row   = makeRow();
+    const label = makeLabel(id, labelText);
+    const input = document.createElement('input');
+    input.type     = 'text';
+    input.id       = id;
+    input.name     = id;
+    input.required = required;
+    row.appendChild(label);
+    row.appendChild(input);
+    return row;
+  }
+
+  function buildSelectRow(id, attr) {
+    const row   = makeRow();
+    const label = makeLabel(id, attr.title);
+    const sel   = document.createElement('select');
+    sel.id       = id;
+    sel.name     = id;
+    sel.required = true;
+    sel.innerHTML = '<option value="">Select…</option>';
+    (attr.enum || []).forEach(v => {
+      const opt       = document.createElement('option');
+      opt.value       = v;
+      opt.textContent = v;
+      sel.appendChild(opt);
+    });
+    row.appendChild(label);
+    row.appendChild(sel);
+    return row;
+  }
+
+  function buildCheckboxRow(id, attr) {
+    const row   = document.createElement('div');
+    row.className = 'checkbox-row full-row';
+    const input = document.createElement('input');
+    input.type  = 'checkbox';
+    input.id    = id;
+    input.name  = id;
+    const label = document.createElement('label');
+    label.setAttribute('for', id);
+    label.textContent = attr.title;
+    row.appendChild(input);
+    row.appendChild(label);
+    return row;
+  }
+
+  function buildDateTimeRow(id, attr) {
+    const row   = makeRow();
+    const label = makeLabel(id, attr.title);
+    const input = document.createElement('input');
+    input.type  = 'datetime-local';
+    input.id    = id;
+    input.name  = id;
+    row.appendChild(label);
+    row.appendChild(input);
+    return row;
+  }
+
+  function makeRow() {
+    const d = document.createElement('div');
+    d.className = 'form-grid full-row';
+    return d;
+  }
+
+  function makeLabel(forId, text) {
+    const l = document.createElement('label');
+    l.setAttribute('for', forId);
+    l.textContent = text;
+    return l;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     EVENT WIRING
+  ══════════════════════════════════════════════════════════════════ */
+
+  // Work type change → fetch schema → render fields
+  document.getElementById('workTypeSelect').addEventListener('change', async e => {
+    const selectedOpt = e.target.selectedOptions[0];
+    const schemaId    = selectedOpt?.dataset?.schemaId;
+
+    if (!schemaId) {
+      document.getElementById('attributesContainer').innerHTML = '';
+      document.getElementById('submitBtn').disabled = true;
+      return;
     }
 
-    init();
-  </script>
+    try {
+      document.getElementById('submitBtn').disabled = true;
+      const schema = await fetchSchema(schemaId);
+      renderSchemaAttributes(schema.jsonSchema?.properties || {});
+    } catch (err) {
+      log(`Failed to fetch schema: ${err.message}`, 'error');
+      showStatus(`Could not load schema: ${err.message}`, 'error');
+    }
+  });
+
+  // Form submit → create work item
+  document.getElementById('workItemForm').addEventListener('submit', async e => {
+    e.preventDefault();
+
+    const workTypeId = document.getElementById('workTypeSelect').value;
+    if (!workTypeId) {
+      showStatus('Please select a Work Type.', 'error');
+      return;
+    }
+
+    const btn        = document.getElementById('submitBtn');
+    btn.disabled     = true;
+    btn.innerHTML    = '<span class="spinner"></span>Creating…';
+
+    const formData   = new FormData(e.target);
+    const attributes = Object.fromEntries(formData.entries());
+
+    try {
+      const result = await createWorkItem(workTypeId, attributes);
+      log(`Work item created: id=${result.id} name="${result.name}"`, 'ok');
+      showStatus(`✓ Work Item "${result.name}" created (id: ${result.id})`, 'success');
+      e.target.reset();
+      document.getElementById('attributesContainer').innerHTML = '';
+      document.getElementById('workTypeSelect').value = '';
+    } catch (err) {
+      log(`Work item creation failed: ${err.message}`, 'error');
+      showStatus(`Failed to create Work Item: ${err.message}`, 'error');
+    } finally {
+      btn.disabled  = false;
+      btn.innerHTML = 'Create Work Item';
+    }
+  });
+
+  /* ══════════════════════════════════════════════════════════════════
+     INIT
+  ══════════════════════════════════════════════════════════════════ */
+  async function init() {
+    log('App initialising…', 'info');
+    log(`Redirect URI: ${REDIRECT_URI}`, 'info');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const code      = urlParams.get('code');
+    const authError = urlParams.get('error');
+
+    /* ── Auth error returned from Genesys ── */
+    if (authError) {
+      const desc = urlParams.get('error_description') || authError;
+      log(`OAuth error from Genesys: ${desc}`, 'error');
+      showStatus(`Authentication error: ${desc}`, 'error');
+      document.getElementById('authMessage').textContent = `Auth error: ${desc}`;
+      return;
+    }
+
+    /* ── PKCE code returned — exchange for token ── */
+    if (code) {
+      // Strip the code from the URL bar (cosmetic, also prevents accidental re-use)
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+
+      try {
+        accessToken = await exchangeCodeForToken(code);
+        sessionStorage.setItem('gc_access_token', accessToken); // optional: cache token
+        showStatus('Authenticated successfully.', 'success');
+      } catch (err) {
+        log(`Token exchange error: ${err.message}`, 'error');
+        showStatus(`Authentication failed: ${err.message}`, 'error');
+        document.getElementById('authMessage').textContent = `Auth failed: ${err.message}`;
+        return;
+      }
+    } else {
+      /* ── Check for a previously cached token ── */
+      const cached = sessionStorage.getItem('gc_access_token');
+      if (cached) {
+        log('Reusing cached access token from sessionStorage.', 'info');
+        accessToken = cached;
+      } else {
+        /* ── No token at all — kick off PKCE flow ── */
+        log('No token found — starting PKCE authorisation flow.', 'info');
+        document.getElementById('authMessage').textContent = 'Redirecting to Genesys login…';
+        await redirectToGenesysOAuth();
+        return; // page will redirect
+      }
+    }
+
+    /* ── Authenticated: show main UI ── */
+    document.getElementById('authCard').style.display = 'none';
+    document.getElementById('mainCard').style.display = 'block';
+    showStatus('Loading work types…', 'info');
+
+    try {
+      const workTypes = await fetchWorkTypes();
+      if (workTypes.length === 0) {
+        showStatus('No work types found matching the "CD" prefix.', 'warn');
+        log('No work types returned. Check filter or permissions.', 'warn');
+        return;
+      }
+      populateDropdown(workTypes);
+      showStatus(`${workTypes.length} work type(s) loaded. Select one to begin.`, 'info');
+    } catch (err) {
+      log(`Failed to load work types: ${err.message}`, 'error');
+      showStatus(`Could not load work types: ${err.message}`, 'error');
+
+      // If we get a 401, the token may be stale — clear it and re-auth
+      if (err.message.includes('401')) {
+        log('401 received — clearing cached token and re-authenticating.', 'warn');
+        sessionStorage.removeItem('gc_access_token');
+        await redirectToGenesysOAuth();
+      }
+    }
+  }
+
+  init();
+</script>
 </body>
 </html>
