@@ -13,6 +13,7 @@
       --border     : #d0d7de;
       --accent     : #0061A8;
       --accent-hov : #004e8c;
+      --accent-lite: #e8f2ff;
       --bg         : #f6f8fa;
       --surface    : #ffffff;
       --text       : #1a1a2e;
@@ -48,33 +49,87 @@
       margin-bottom: 20px;
     }
 
-    /* Work type selector row */
-    .selector-row {
+    /* ── Work Type Search + Picker ───────────────────────────────── */
+    .wt-section { margin-bottom: 20px; }
+
+    .wt-row {
       display              : grid;
       grid-template-columns: var(--label-col) 1fr;
       gap                  : 0 16px;
-      align-items          : center;
-      margin-bottom        : 20px;
+      align-items          : start;
     }
-    .selector-row label {
-      font-weight: 600;
-      font-size  : 0.9rem;
+
+    .wt-row > label {
+      font-weight : 600;
+      font-size   : 0.9rem;
+      padding-top : 10px;
     }
-    .selector-row select {
+
+    .wt-picker { position: relative; }
+
+    .wt-search {
       width        : 100%;
-      padding      : 9px 10px;
+      padding      : 9px 10px 9px 34px;
       border       : 1px solid var(--border);
       border-radius: 6px;
       font-size    : 0.9rem;
+      background   : var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236e7781' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.415l-3.868-3.833zm-5.242 1.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E") no-repeat 10px center;
+      transition   : border-color .15s, box-shadow .15s;
+    }
+    .wt-search:focus {
+      outline     : none;
+      border-color: var(--accent);
+      box-shadow  : 0 0 0 3px rgba(0,97,168,.15);
     }
 
+    .wt-dropdown {
+      display      : none;
+      position     : absolute;
+      top          : calc(100% + 4px);
+      left         : 0;
+      right        : 0;
+      background   : var(--surface);
+      border       : 1px solid var(--border);
+      border-radius: 6px;
+      max-height   : 220px;
+      overflow-y   : auto;
+      z-index      : 100;
+      box-shadow   : 0 4px 16px rgba(0,0,0,.12);
+    }
+    .wt-dropdown.open { display: block; }
+
+    .wt-option {
+      padding    : 9px 12px;
+      cursor     : pointer;
+      font-size  : 0.9rem;
+      transition : background .1s;
+    }
+    .wt-option:hover        { background: var(--accent-lite); }
+    .wt-option.selected     { background: var(--accent-lite); font-weight: 600; color: var(--accent); }
+    .wt-option.no-match     { color: var(--muted); cursor: default; font-style: italic; }
+    .wt-option mark         { background: #fff3a3; border-radius: 2px; padding: 0 1px; font-weight: 600; }
+
+    .wt-selected-badge {
+      display      : none;
+      margin-top   : 6px;
+      padding      : 5px 10px;
+      background   : var(--accent-lite);
+      border       : 1px solid var(--accent);
+      border-radius: 4px;
+      font-size    : 0.82rem;
+      font-weight  : 600;
+      color        : var(--accent);
+    }
+    .wt-selected-badge.visible { display: inline-block; }
+
+    /* ── Divider ─────────────────────────────────────────────────── */
     .section-divider {
       border    : none;
       border-top: 1px solid var(--border);
       margin    : 0 0 20px 0;
     }
 
-    /* Status banner */
+    /* ── Status banner ───────────────────────────────────────────── */
     #statusBanner {
       display      : none;
       padding      : 12px 16px;
@@ -87,7 +142,7 @@
     #statusBanner.error   { background:#ffdcdc; border-color:var(--error);   color:var(--error);   }
     #statusBanner.info    { background:#daeeff; border-color:var(--accent);  color:var(--accent);  }
 
-    /* Button */
+    /* ── Buttons ─────────────────────────────────────────────────── */
     .btn {
       padding      : 10px 22px;
       border       : none;
@@ -102,7 +157,7 @@
     .btn-primary:active   { transform: scale(.98); }
     .btn-primary:disabled { background: #a0aec0; cursor: not-allowed; }
 
-    /* Spinner */
+    /* ── Spinner ─────────────────────────────────────────────────── */
     .spinner {
       display       : inline-block;
       width         : 18px;
@@ -116,7 +171,7 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Auth overlay */
+    /* ── Auth overlay ────────────────────────────────────────────── */
     #authOverlay {
       display        : flex;
       flex-direction : column;
@@ -128,7 +183,7 @@
       color          : var(--muted);
     }
 
-    /* Debug log */
+    /* ── Debug log ───────────────────────────────────────────────── */
     details.debug-panel         { margin-top: 24px; }
     details.debug-panel summary { cursor:pointer; font-weight:600; color:var(--muted); user-select:none; padding:4px 0; }
     #debugLog {
@@ -157,18 +212,30 @@
 
   <div id="statusBanner" role="alert"></div>
 
-  <!-- Main card (shown after auth) -->
+  <!-- ── Main card (shown after auth) ───────────────────────────── -->
   <div class="card" id="mainCard" style="display:none">
 
-    <div class="selector-row">
-      <label for="workTypeSelect">Select Work Type:</label>
-      <select id="workTypeSelect">
-        <option value="">&#8212; Select a Work Type &#8212;</option>
-      </select>
+    <!-- Work Type search + picker -->
+    <div class="wt-section">
+      <div class="wt-row">
+        <label for="wtSearch">Select Work Type:</label>
+        <div class="wt-picker" id="wtPicker">
+          <input type="text"
+                 id="wtSearch"
+                 class="wt-search"
+                 placeholder="Type to filter work types..."
+                 autocomplete="off" />
+          <div class="wt-dropdown" id="wtDropdown" role="listbox"></div>
+          <span class="wt-selected-badge" id="wtBadge"></span>
+        </div>
+      </div>
+      <!-- Hidden field carries the selected worktype id for form submission -->
+      <input type="hidden" id="selectedWorktypeId" value="" />
     </div>
 
     <hr class="section-divider">
 
+    <!-- Dynamic attribute form -->
     <form id="workItemForm" novalidate>
       <div id="attributesContainer"></div>
       <div id="submitRow" style="margin-top:8px; display:none">
@@ -180,7 +247,7 @@
 
   </div>
 
-  <!-- Auth overlay (shown before auth) -->
+  <!-- ── Auth overlay (shown before auth) ───────────────────────── -->
   <div class="card" id="authCard">
     <div id="authOverlay">
       <div class="spinner"></div>
@@ -188,13 +255,13 @@
     </div>
   </div>
 
-  <!-- Debug log -->
+  <!-- ── Debug log ──────────────────────────────────────────────── -->
   <details class="debug-panel" open>
     <summary>&#x1F6E0; Debug Log</summary>
     <div id="debugLog"></div>
   </details>
 
-</div>
+</div><!-- /.container -->
 
 <script>
   /* ══════════════════════════════════════════════════════════════════
@@ -207,6 +274,8 @@
   const REDIRECT_URI = window.location.origin + window.location.pathname;
 
   let accessToken = '';
+  let allWorkTypes = [];          // full list, used for client-side filtering
+  let selectedWorktypeId = '';    // currently chosen worktype id
 
   /* ══════════════════════════════════════════════════════════════════
      DEBUG LOGGER
@@ -221,9 +290,9 @@
     line.textContent = '[' + ts + '] ' + msg;
     logEl.appendChild(line);
     logEl.scrollTop  = logEl.scrollHeight;
-    if (level === 'error') { console.error(msg); }
-    else if (level === 'warn') { console.warn(msg); }
-    else { console.log(msg); }
+    if (level === 'error') console.error(msg);
+    else if (level === 'warn') console.warn(msg);
+    else console.log(msg);
   }
 
   /* ══════════════════════════════════════════════════════════════════
@@ -235,9 +304,7 @@
     el.textContent   = msg;
     el.className     = type;
     el.style.display = 'block';
-    if (type === 'success') {
-      setTimeout(function() { el.style.display = 'none'; }, 6000);
-    }
+    if (type === 'success') setTimeout(function() { el.style.display = 'none'; }, 6000);
   }
 
   /* ══════════════════════════════════════════════════════════════════
@@ -261,7 +328,6 @@
     const verifier  = generateCodeVerifier();
     const challenge = await generateCodeChallenge(verifier);
     sessionStorage.setItem('pkce_verifier', verifier);
-
     const params = new URLSearchParams({
       response_type        : 'code',
       client_id            : CLIENT_ID,
@@ -269,37 +335,30 @@
       code_challenge       : challenge,
       code_challenge_method: 'S256',
     });
-
     log('Redirecting to Genesys PKCE auth...', 'info');
     window.location.href = AUTH_BASE + '/oauth/authorize?' + params.toString();
   }
 
   async function exchangeCodeForToken(code) {
     const verifier = sessionStorage.getItem('pkce_verifier');
-    if (!verifier) {
-      throw new Error('PKCE verifier missing from sessionStorage.');
-    }
-
+    if (!verifier) throw new Error('PKCE verifier missing from sessionStorage.');
     log('Exchanging authorisation code for access token...', 'info');
-
     const response = await fetch(AUTH_BASE + '/oauth/token', {
       method : 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body   : new URLSearchParams({
-        grant_type    : 'authorization_code',
-        client_id     : CLIENT_ID,
-        code          : code,
-        redirect_uri  : REDIRECT_URI,
-        code_verifier : verifier,
+        grant_type   : 'authorization_code',
+        client_id    : CLIENT_ID,
+        code         : code,
+        redirect_uri : REDIRECT_URI,
+        code_verifier: verifier,
       }),
     });
-
     const data = await response.json();
     if (!response.ok) {
       log('Token exchange failed (' + response.status + '): ' + JSON.stringify(data), 'error');
       throw new Error(data.error_description || 'Token exchange failed');
     }
-
     sessionStorage.removeItem('pkce_verifier');
     log('Access token obtained.', 'ok');
     return data.access_token;
@@ -312,7 +371,6 @@
     options = options || {};
     const url = path.startsWith('http') ? path : API_BASE + path;
     log('--> ' + (options.method || 'GET') + ' ' + url, 'info');
-
     const response = await fetch(url, Object.assign({}, options, {
       headers: Object.assign({
         'Authorization': 'Bearer ' + accessToken,
@@ -320,52 +378,50 @@
         'Content-Type' : 'application/json',
       }, options.headers || {}),
     }));
-
     const text = await response.text();
     let data;
     try { data = JSON.parse(text); } catch(e) { data = text; }
-
     if (!response.ok) {
       log('<-- ' + response.status + ' ' + response.statusText + ': ' + JSON.stringify(data), 'error');
       throw new Error('API ' + response.status + ': ' + response.statusText);
     }
-
     log('<-- ' + response.status + ' OK', 'ok');
     return data;
   }
 
   /* ══════════════════════════════════════════════════════════════════
      DATA FUNCTIONS
-     
-     Chain:
-       1. fetchWorkTypes()         Query endpoint — gets list of [{id, name}]
-       2. fetchWorktypeById(id)    Full worktype  — gives us worktype.schema.id
-       3. fetchSchema(schemaId)    Schema detail  — gives us jsonSchema.properties
-       4. createWorkItem(...)      POST to create
+
+     Chain on work type selection:
+       1. fetchWorkTypes()        — list all worktypes (no filter, client-side search)
+       2. fetchWorktypeById(id)   — full worktype detail → gets schema.id
+       3. fetchSchema(schemaId)   — schema → jsonSchema.properties
+       4. createWorkItem(...)     — POST new workitem
   ══════════════════════════════════════════════════════════════════ */
 
   async function fetchWorkTypes() {
-    log('Fetching work types matching "CD"...', 'info');
+    log('Fetching all work types...', 'info');
     const data = await apiFetch('/api/v2/taskmanagement/worktypes/query', {
       method: 'POST',
       body  : JSON.stringify({
-        pageSize  : 30,
+        pageSize  : 100,
         attributes: ['id', 'name'],
-        filters   : [{ name: 'name', type: 'string', operator: 'BEGINS_WITH', values: ['CD'] }],
       }),
     });
     const entities = data.entities || [];
+    // Sort alphabetically for easier scanning
+    entities.sort(function(a, b) { return a.name.localeCompare(b.name); });
     log('Got ' + entities.length + ' work type(s).', entities.length ? 'ok' : 'warn');
     return entities;
   }
 
   async function fetchWorktypeById(worktypeId) {
-    log('Fetching full worktype id=' + worktypeId + ' to get schema.id...', 'info');
+    log('Fetching full worktype id=' + worktypeId + '...', 'info');
     const data = await apiFetch('/api/v2/taskmanagement/worktypes/' + worktypeId);
     if (!data.schema || !data.schema.id) {
-      log('Worktype "' + data.name + '" has no schema attached.', 'warn');
+      log('Worktype "' + data.name + '" has no schema.', 'warn');
     } else {
-      log('Worktype "' + data.name + '" has schema.id = ' + data.schema.id, 'ok');
+      log('Worktype "' + data.name + '" schema.id = ' + data.schema.id, 'ok');
     }
     return data;
   }
@@ -373,30 +429,68 @@
   async function fetchSchema(schemaId) {
     log('Fetching schema id=' + schemaId + '...', 'info');
     const data = await apiFetch('/api/v2/taskmanagement/workitems/schemas/' + schemaId);
-
-    // Log the full raw response so the structure is always visible
-    log('Schema raw response: ' + JSON.stringify(data), 'info');
-
-    // Properties live at data.jsonSchema.properties (or data.properties as fallback)
+    log('Schema raw: ' + JSON.stringify(data), 'info');
     const props = (data.jsonSchema && data.jsonSchema.properties)
                 ? data.jsonSchema.properties
-                : data.properties
-                || null;
-
+                : (data.properties || null);
     if (!props) {
-      log('WARNING: no .properties found in schema response.', 'warn');
+      log('WARNING: no .properties in schema response.', 'warn');
     } else {
-      log('Schema properties found: ' + Object.keys(props).join(', '), 'ok');
+      log('Schema properties: ' + Object.keys(props).join(', '), 'ok');
     }
     return props;
   }
 
+  /* ══════════════════════════════════════════════════════════════════
+     DATE FORMATTING HELPERS
+
+     Genesys Cloud expects:
+       _date fields     → "YYYY-MM-DD"          (ISO 8601 date)
+       _datetime fields → "YYYY-MM-DDTHH:MM:SSZ" (ISO 8601 datetime UTC)
+
+     The browser date input returns  "YYYY-MM-DD"        (already correct)
+     The browser datetime-local returns "YYYY-MM-DDTHH:MM" (needs seconds+Z)
+  ══════════════════════════════════════════════════════════════════ */
+
+  function formatDateValue(val) {
+    // input[type=date] gives "YYYY-MM-DD" — already correct for Genesys
+    // Guard against any locale-variant (DD/MM/YYYY) just in case
+    if (!val) return val;
+    // If already ISO format, return as-is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+    // Try to parse DD/MM/YYYY fallback
+    var parts = val.split('/');
+    if (parts.length === 3) return parts[2] + '-' + parts[1] + '-' + parts[0];
+    return val;
+  }
+
+  function formatDateTimeValue(val) {
+    // input[type=datetime-local] gives "YYYY-MM-DDTHH:MM" or "YYYY-MM-DDTHH:MM:SS"
+    // Genesys needs full ISO with seconds and Z suffix
+    if (!val) return val;
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(val)) return val + ':00Z';
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(val)) return val + 'Z';
+    return val;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     CREATE WORK ITEM
+  ══════════════════════════════════════════════════════════════════ */
   async function createWorkItem(worktypeId, formAttributes) {
     var customFields = {};
     Object.keys(formAttributes).forEach(function(key) {
       var value = formAttributes[key];
       if (key === 'name' || value === '') return;
-      customFields[key] = key.endsWith('_checkbox') ? (value === 'on') : value;
+
+      if (key.endsWith('_checkbox')) {
+        customFields[key] = (value === 'on' || value === true);
+      } else if (key.endsWith('_date')) {
+        customFields[key] = formatDateValue(value);
+      } else if (key.endsWith('_datetime')) {
+        customFields[key] = formatDateTimeValue(value);
+      } else {
+        customFields[key] = value;
+      }
     });
 
     var payload = {
@@ -413,7 +507,173 @@
   }
 
   /* ══════════════════════════════════════════════════════════════════
-     UI HELPERS
+     WORK TYPE SEARCH PICKER
+  ══════════════════════════════════════════════════════════════════ */
+  function initWorkTypePicker(workTypes) {
+    allWorkTypes = workTypes;
+
+    const searchEl   = document.getElementById('wtSearch');
+    const dropdownEl = document.getElementById('wtDropdown');
+    const badgeEl    = document.getElementById('wtBadge');
+    const hiddenEl   = document.getElementById('selectedWorktypeId');
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, function(c) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+      });
+    }
+
+    function highlight(name, query) {
+      if (!query) return escapeHtml(name);
+      var idx = name.toLowerCase().indexOf(query.toLowerCase());
+      if (idx === -1) return escapeHtml(name);
+      return escapeHtml(name.slice(0, idx))
+           + '<mark>' + escapeHtml(name.slice(idx, idx + query.length)) + '</mark>'
+           + escapeHtml(name.slice(idx + query.length));
+    }
+
+    function renderDropdown(query) {
+      var filtered = query
+        ? allWorkTypes.filter(function(wt) {
+            return wt.name.toLowerCase().indexOf(query.toLowerCase()) !== -1;
+          })
+        : allWorkTypes;
+
+      dropdownEl.innerHTML = '';
+
+      if (filtered.length === 0) {
+        var noMatch = document.createElement('div');
+        noMatch.className   = 'wt-option no-match';
+        noMatch.textContent = 'No work types match "' + query + '"';
+        dropdownEl.appendChild(noMatch);
+        return;
+      }
+
+      filtered.forEach(function(wt) {
+        var item = document.createElement('div');
+        item.className      = 'wt-option' + (wt.id === selectedWorktypeId ? ' selected' : '');
+        item.setAttribute('role', 'option');
+        item.dataset.id     = wt.id;
+        item.dataset.name   = wt.name;
+        item.innerHTML      = highlight(wt.name, query);
+
+        item.addEventListener('mousedown', function(e) {
+          e.preventDefault(); // prevent blur firing before click
+          selectWorktype(wt.id, wt.name);
+        });
+
+        dropdownEl.appendChild(item);
+      });
+    }
+
+    function openDropdown() {
+      renderDropdown(searchEl.value.trim());
+      dropdownEl.classList.add('open');
+    }
+
+    function closeDropdown() {
+      dropdownEl.classList.remove('open');
+    }
+
+    searchEl.addEventListener('focus', function() { openDropdown(); });
+    searchEl.addEventListener('blur',  function() { closeDropdown(); });
+    searchEl.addEventListener('input', function() {
+      // Clear selection if user edits after picking
+      if (selectedWorktypeId) {
+        selectedWorktypeId    = '';
+        hiddenEl.value        = '';
+        badgeEl.className     = 'wt-selected-badge';
+        clearForm();
+      }
+      renderDropdown(searchEl.value.trim());
+    });
+
+    // Keyboard: arrow navigation + enter
+    searchEl.addEventListener('keydown', function(e) {
+      var items = dropdownEl.querySelectorAll('.wt-option:not(.no-match)');
+      var current = dropdownEl.querySelector('.wt-option.focused');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!dropdownEl.classList.contains('open')) { openDropdown(); return; }
+        var next = current ? (current.nextElementSibling || items[0]) : items[0];
+        if (current) current.classList.remove('focused');
+        if (next) next.classList.add('focused');
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        var prev = current ? (current.previousElementSibling || items[items.length - 1]) : items[items.length - 1];
+        if (current) current.classList.remove('focused');
+        if (prev) prev.classList.add('focused');
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (current) { selectWorktype(current.dataset.id, current.dataset.name); }
+      } else if (e.key === 'Escape') {
+        closeDropdown();
+      }
+    });
+
+    // Close dropdown if clicking outside
+    document.addEventListener('click', function(e) {
+      if (!document.getElementById('wtPicker').contains(e.target)) {
+        closeDropdown();
+      }
+    });
+  }
+
+  async function selectWorktype(id, name) {
+    const searchEl  = document.getElementById('wtSearch');
+    const badgeEl   = document.getElementById('wtBadge');
+    const hiddenEl  = document.getElementById('selectedWorktypeId');
+    const container = document.getElementById('attributesContainer');
+    const submitRow = document.getElementById('submitRow');
+
+    // Update UI state
+    selectedWorktypeId  = id;
+    hiddenEl.value      = id;
+    searchEl.value      = name;
+    badgeEl.textContent = '✓ ' + name;
+    badgeEl.className   = 'wt-selected-badge visible';
+    document.getElementById('wtDropdown').classList.remove('open');
+
+    clearForm();
+    container.innerHTML = '<div style="padding:10px 0; color:var(--muted)"><span class="spinner"></span> Loading attributes...</div>';
+
+    log('Selected work type: "' + name + '" id=' + id, 'info');
+
+    try {
+      var worktype = await fetchWorktypeById(id);
+      var schemaId = worktype.schema && worktype.schema.id;
+
+      if (!schemaId) {
+        log('No schema on this worktype — name field only.', 'warn');
+        container.innerHTML = '';
+        container.appendChild(buildRow('name', 'Workitem Name', 'text', true));
+        submitRow.style.display = 'block';
+        return;
+      }
+
+      var properties = await fetchSchema(schemaId);
+
+      if (!properties) {
+        container.innerHTML = '<p style="color:var(--error); font-size:0.85rem; padding:8px 0;">Schema returned no properties — check debug log.</p>';
+        return;
+      }
+
+      renderSchemaAttributes(properties);
+
+    } catch (err) {
+      container.innerHTML = '';
+      log('Error loading schema: ' + err.message, 'error');
+      showStatus('Failed to load schema: ' + err.message, 'error');
+    }
+  }
+
+  function clearForm() {
+    document.getElementById('attributesContainer').innerHTML = '';
+    document.getElementById('submitRow').style.display = 'none';
+  }
+
+  /* ══════════════════════════════════════════════════════════════════
+     FORM RENDERING
   ══════════════════════════════════════════════════════════════════ */
   var INPUT_STYLE = 'width:100%; padding:9px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.9rem;';
   var ROW_STYLE   = 'display:grid; grid-template-columns:var(--label-col) 1fr; gap:0 16px; align-items:center; margin-bottom:14px;';
@@ -431,7 +691,6 @@
     var row = document.createElement('div');
     row.style.cssText = ROW_STYLE;
     row.appendChild(makeLabel(id, labelText));
-
     var inp = document.createElement('input');
     inp.type          = type || 'text';
     inp.id            = id;
@@ -446,7 +705,6 @@
     var row = document.createElement('div');
     row.style.cssText = ROW_STYLE;
     row.appendChild(makeLabel(id, attr.title || id));
-
     var sel = document.createElement('select');
     sel.id            = id;
     sel.name          = id;
@@ -465,7 +723,6 @@
   function buildCheckboxRow(id, attr) {
     var row = document.createElement('div');
     row.style.cssText = 'display:flex; align-items:center; gap:10px; margin-bottom:14px;';
-
     var inp = document.createElement('input');
     inp.type          = 'checkbox';
     inp.id            = id;
@@ -476,29 +733,18 @@
     return row;
   }
 
-  function populateDropdown(workTypes) {
-    var sel = document.getElementById('workTypeSelect');
-    workTypes.forEach(function(wt) {
-      var opt = document.createElement('option');
-      opt.value       = wt.id;   // worktype id only; schema resolved on demand
-      opt.textContent = wt.name;
-      sel.appendChild(opt);
-    });
-    log('Dropdown populated.', 'ok');
-  }
-
   function renderSchemaAttributes(properties) {
     var container = document.getElementById('attributesContainer');
     container.innerHTML = '';
 
-    // Always show Name first
+    // Always first: the required Workitem Name
     container.appendChild(buildRow('name', 'Workitem Name', 'text', true));
 
     var keys = Object.keys(properties).filter(function(k) {
       return !k.startsWith('z_routing');
     });
 
-    log('Rendering ' + keys.length + ' custom field(s): ' + keys.join(', '), 'ok');
+    log('Rendering ' + keys.length + ' field(s): ' + keys.join(', '), 'ok');
 
     keys.forEach(function(key) {
       var attr = properties[key];
@@ -507,7 +753,11 @@
       } else if (key.endsWith('_checkbox')) {
         container.appendChild(buildCheckboxRow(key, attr));
       } else if (key.endsWith('_datetime')) {
+        // datetime-local picker; value converted to ISO on submit
         container.appendChild(buildRow(key, attr.title || key, 'datetime-local', false));
+      } else if (key.endsWith('_date')) {
+        // date picker; value is already YYYY-MM-DD from the browser
+        container.appendChild(buildRow(key, attr.title || key, 'date', false));
       } else {
         container.appendChild(buildRow(key, attr.title || key, 'text', false));
       }
@@ -524,60 +774,14 @@
   }
 
   /* ══════════════════════════════════════════════════════════════════
-     EVENT WIRING
+     FORM SUBMIT
   ══════════════════════════════════════════════════════════════════ */
-
-  /* Work type selected: fetch full worktype -> get schema.id -> fetch schema -> render */
-  document.getElementById('workTypeSelect').addEventListener('change', async function(e) {
-    var worktypeId = e.target.value;
-    var container  = document.getElementById('attributesContainer');
-    var submitRow  = document.getElementById('submitRow');
-
-    container.innerHTML     = '';
-    submitRow.style.display = 'none';
-
-    if (!worktypeId) return;
-
-    container.innerHTML = '<div style="padding:10px 0; color:var(--muted)"><span class="spinner"></span> Loading attributes...</div>';
-
-    try {
-      // Step 2: full worktype gives schema.id
-      var worktype = await fetchWorktypeById(worktypeId);
-      var schemaId = worktype.schema && worktype.schema.id;
-
-      if (!schemaId) {
-        log('No schema on this worktype — showing name field only.', 'warn');
-        container.innerHTML = '';
-        container.appendChild(buildRow('name', 'Workitem Name', 'text', true));
-        submitRow.style.display = 'block';
-        return;
-      }
-
-      // Step 3: fetch schema properties
-      var properties = await fetchSchema(schemaId);
-
-      if (!properties) {
-        container.innerHTML = '<p style="color:var(--error); font-size:0.85rem;">Schema returned no properties — check the debug log.</p>';
-        return;
-      }
-
-      // Render the form fields
-      renderSchemaAttributes(properties);
-
-    } catch (err) {
-      container.innerHTML = '';
-      log('Error loading schema: ' + err.message, 'error');
-      showStatus('Failed to load schema: ' + err.message, 'error');
-    }
-  });
-
-  /* Form submit: collect values and create work item */
   document.getElementById('workItemForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    var worktypeId = document.getElementById('workTypeSelect').value;
+    var worktypeId = document.getElementById('selectedWorktypeId').value;
     if (!worktypeId) {
-      showStatus('Please select a Work Type.', 'error');
+      showStatus('Please select a Work Type first.', 'error');
       return;
     }
 
@@ -593,10 +797,15 @@
       var result = await createWorkItem(worktypeId, attributes);
       log('Work item created: id=' + result.id + ' name="' + result.name + '"', 'ok');
       showStatus('Work Item "' + result.name + '" created (id: ' + result.id + ')', 'success');
+
+      // Reset form but keep worktype picker intact
       e.target.reset();
-      document.getElementById('attributesContainer').innerHTML = '';
-      document.getElementById('submitRow').style.display = 'none';
-      document.getElementById('workTypeSelect').value = '';
+      clearForm();
+      selectedWorktypeId = '';
+      document.getElementById('selectedWorktypeId').value = '';
+      document.getElementById('wtSearch').value           = '';
+      document.getElementById('wtBadge').className        = 'wt-selected-badge';
+
     } catch (err) {
       log('Work item creation failed: ' + err.message, 'error');
       showStatus('Failed to create Work Item: ' + err.message, 'error');
@@ -657,16 +866,16 @@
     try {
       var workTypes = await fetchWorkTypes();
       if (!workTypes.length) {
-        showStatus('No work types found with prefix "CD". Check permissions.', 'error');
+        showStatus('No work types found. Check permissions.', 'error');
         return;
       }
-      populateDropdown(workTypes);
-      showStatus(workTypes.length + ' work type(s) loaded — select one to begin.', 'info');
+      initWorkTypePicker(workTypes);
+      showStatus(workTypes.length + ' work type(s) loaded — search to select one.', 'info');
     } catch (err) {
       log('Failed to load work types: ' + err.message, 'error');
       showStatus('Could not load work types: ' + err.message, 'error');
       if (err.message.indexOf('401') !== -1) {
-        log('401 received — clearing token and re-authenticating.', 'warn');
+        log('401 — clearing token and re-authenticating.', 'warn');
         sessionStorage.removeItem('gc_access_token');
         await redirectToGenesysOAuth();
       }
