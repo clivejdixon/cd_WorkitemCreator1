@@ -238,10 +238,21 @@
     <!-- Dynamic attribute form -->
     <form id="workItemForm" novalidate>
       <div id="attributesContainer"></div>
-      <div id="submitRow" style="margin-top:8px; display:none">
-        <button type="submit" id="submitBtn" class="btn btn-primary">
-          Create Work Item
-        </button>
+      <div id="submitRow" style="margin-top:16px; display:none">
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button type="button" id="createBtn1" class="btn btn-primary" data-count="1">
+            Create x1 Workitem
+          </button>
+          <button type="button" id="createBtn3" class="btn btn-primary" data-count="3">
+            Create x3 Workitems
+          </button>
+          <button type="button" id="createBtn5" class="btn btn-primary" data-count="5">
+            Create x5 Workitems
+          </button>
+          <button type="button" id="createBtn10" class="btn btn-primary" data-count="10">
+            Create x10 Workitems
+          </button>
+        </div>
       </div>
     </form>
 
@@ -820,46 +831,115 @@
   }
 
   /* ══════════════════════════════════════════════════════════════════
-     FORM SUBMIT
+     BULK WORKITEM CREATION
   ══════════════════════════════════════════════════════════════════ */
-  document.getElementById('workItemForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
 
+  /* Helper: sleep for N milliseconds */
+  function sleep(ms) {
+    return new Promise(function(resolve) { setTimeout(resolve, ms); });
+  }
+
+  /* Helper: collect form values into an object */
+  function collectFormData() {
+    var form = document.getElementById('workItemForm');
+    var formData = new FormData(form);
+    var attributes = {};
+    formData.forEach(function(value, key) { attributes[key] = value; });
+    return attributes;
+  }
+
+  /* Helper: disable all create buttons */
+  function disableAllButtons(disabled) {
+    ['createBtn1', 'createBtn3', 'createBtn5', 'createBtn10'].forEach(function(id) {
+      var btn = document.getElementById(id);
+      if (btn) btn.disabled = disabled;
+    });
+  }
+
+  /* Main handler: create N workitems with suffixes */
+  async function handleBulkCreate(count, clickedBtn) {
     var worktypeId = document.getElementById('selectedWorktypeId').value;
     if (!worktypeId) {
       showStatus('Please select a Work Type first.', 'error');
       return;
     }
 
-    var btn     = document.getElementById('submitBtn');
-    btn.disabled  = true;
-    btn.innerHTML = '<span class="spinner"></span>Creating...';
-
-    var formData   = new FormData(e.target);
-    var attributes = {};
-    formData.forEach(function(value, key) { attributes[key] = value; });
-
-    try {
-      var result = await createWorkItem(worktypeId, attributes);
-      log('Work item created: id=' + result.id + ' name="' + result.name + '"', 'ok');
-      showStatus('Work Item "' + result.name + '" created (id: ' + result.id + ')', 'success');
-
-      // Reset form but keep worktype picker intact
-      e.target.reset();
-      clearForm();
-      selectedWorktypeId = '';
-      document.getElementById('selectedWorktypeId').value = '';
-      document.getElementById('wtSearch').value           = '';
-      document.getElementById('wtBadge').className        = 'wt-selected-badge';
-
-    } catch (err) {
-      log('Work item creation failed: ' + err.message, 'error');
-      showStatus('Failed to create Work Item: ' + err.message, 'error');
-    } finally {
-      btn.disabled  = false;
-      btn.innerHTML = 'Create Work Item';
+    var baseAttributes = collectFormData();
+    if (!baseAttributes.name || baseAttributes.name.trim() === '') {
+      showStatus('Workitem Name is required.', 'error');
+      return;
     }
-  });
+
+    var baseName = baseAttributes.name.trim();
+    var createdIds = [];
+    var failedCount = 0;
+
+    disableAllButtons(true);
+    clickedBtn.innerHTML = '<span class="spinner"></span>Creating...';
+
+    log('Starting bulk creation: ' + count + ' workitem(s) with base name "' + baseName + '"', 'info');
+
+    for (var i = 1; i <= count; i++) {
+      var suffix = (i < 10) ? '0' + i : '' + i;
+      var itemName = baseName + ' ' + suffix;
+
+      var itemAttrs = Object.assign({}, baseAttributes);
+      itemAttrs.name = itemName;
+
+      // Update progress in status banner
+      showStatus('Creating workitem ' + i + ' of ' + count + ': ' + itemName + '...', 'info');
+
+      try {
+        log('[' + i + '/' + count + '] Creating: ' + itemName, 'info');
+        var result = await createWorkItem(worktypeId, itemAttrs);
+        createdIds.push({ id: result.id, name: result.name });
+        log('  ✓ Created: id=' + result.id, 'ok');
+
+        if (i < count) {
+          log('  Pausing 1 second...', 'info');
+          await sleep(1000);
+        }
+      } catch (err) {
+        failedCount++;
+        log('  ✗ Failed: ' + err.message, 'error');
+      }
+    }
+
+    disableAllButtons(false);
+    clickedBtn.innerHTML = clickedBtn.getAttribute('data-original-text');
+
+    if (failedCount === 0) {
+      showStatus('✓ Created ' + createdIds.length + ' workitem(s) successfully.', 'success');
+      log('Bulk creation complete: ' + createdIds.length + ' created, 0 failed.', 'ok');
+    } else {
+      showStatus('Created ' + createdIds.length + ' workitem(s); ' + failedCount + ' failed.', 'error');
+      log('Bulk creation complete: ' + createdIds.length + ' created, ' + failedCount + ' failed.', 'warn');
+    }
+
+    // Reset form but keep worktype picker
+    document.getElementById('workItemForm').reset();
+    clearForm();
+    selectedWorktypeId = '';
+    document.getElementById('selectedWorktypeId').value = '';
+    document.getElementById('wtSearch').value           = '';
+    document.getElementById('wtBadge').className        = 'wt-selected-badge';
+  }
+
+  /* Attach click handlers to all 4 buttons */
+  function initCreateButtons() {
+    ['createBtn1', 'createBtn3', 'createBtn5', 'createBtn10'].forEach(function(id) {
+      var btn = document.getElementById(id);
+      if (!btn) return;
+      btn.setAttribute('data-original-text', btn.textContent.trim());
+      btn.addEventListener('click', function() {
+        var count = parseInt(this.getAttribute('data-count'), 10);
+        handleBulkCreate(count, this);
+      });
+    });
+  }
+
+  // Initialize buttons after DOM loads (called at end of init())
+
 
   /* ══════════════════════════════════════════════════════════════════
      INIT
@@ -916,6 +996,7 @@
         return;
       }
       initWorkTypePicker(workTypes);
+      initCreateButtons();
       showStatus(workTypes.length + ' work type(s) loaded — search to select one.', 'info');
     } catch (err) {
       log('Failed to load work types: ' + err.message, 'error');
