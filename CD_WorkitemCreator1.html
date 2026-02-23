@@ -488,6 +488,20 @@
         customFields[key] = formatDateValue(value);
       } else if (key.endsWith('_datetime')) {
         customFields[key] = formatDateTimeValue(value);
+      } else if (key.endsWith('_integer')) {
+        var intVal = parseInt(value, 10);
+        if (!isNaN(intVal)) {
+          customFields[key] = intVal;
+        } else {
+          log('Skipping invalid integer "' + key + '": ' + value, 'warn');
+        }
+      } else if (key.endsWith('_number')) {
+        var numVal = parseFloat(value);
+        if (!isNaN(numVal)) {
+          customFields[key] = numVal;
+        } else {
+          log('Skipping invalid number "' + key + '": ' + value, 'warn');
+        }
       } else {
         customFields[key] = value;
       }
@@ -701,6 +715,36 @@
     return row;
   }
 
+  function buildIntegerRow(id, attr) {
+    var row = document.createElement('div');
+    row.style.cssText = ROW_STYLE;
+    row.appendChild(makeLabel(id, attr.title || id));
+    var inp = document.createElement('input');
+    inp.type          = 'number';
+    inp.id            = id;
+    inp.name          = id;
+    inp.step          = '1';
+    inp.placeholder   = 'Enter a whole number';
+    inp.style.cssText = INPUT_STYLE;
+    row.appendChild(inp);
+    return row;
+  }
+
+  function buildNumberRow(id, attr) {
+    var row = document.createElement('div');
+    row.style.cssText = ROW_STYLE;
+    row.appendChild(makeLabel(id, attr.title || id));
+    var inp = document.createElement('input');
+    inp.type          = 'number';
+    inp.id            = id;
+    inp.name          = id;
+    inp.step          = 'any';
+    inp.placeholder   = 'Enter a number';
+    inp.style.cssText = INPUT_STYLE;
+    row.appendChild(inp);
+    return row;
+  }
+
   function buildSelectRow(id, attr) {
     var row = document.createElement('div');
     row.style.cssText = ROW_STYLE;
@@ -753,11 +797,13 @@
       } else if (key.endsWith('_checkbox')) {
         container.appendChild(buildCheckboxRow(key, attr));
       } else if (key.endsWith('_datetime')) {
-        // datetime-local picker; value converted to ISO on submit
         container.appendChild(buildRow(key, attr.title || key, 'datetime-local', false));
       } else if (key.endsWith('_date')) {
-        // date picker; value is already YYYY-MM-DD from the browser
         container.appendChild(buildRow(key, attr.title || key, 'date', false));
+      } else if (key.endsWith('_integer')) {
+        container.appendChild(buildIntegerRow(key, attr));
+      } else if (key.endsWith('_number')) {
+        container.appendChild(buildNumberRow(key, attr));
       } else {
         container.appendChild(buildRow(key, attr.title || key, 'text', false));
       }
