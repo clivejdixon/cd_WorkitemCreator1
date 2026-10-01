@@ -115,25 +115,24 @@
             <div>
               <label for="regionSelect"><strong>Genesys Cloud region</strong></label>
               <select id="regionSelect" class="field-control" style="margin-top:7px">
-                <option value="mypurecloud.ie">eu-west-1 · Ireland · mypurecloud.ie</option>
-                <option value="euw2.pure.cloud">eu-west-2 · London · euw2.pure.cloud</option>
-                <option value="mypurecloud.de">eu-central-1 · Frankfurt · mypurecloud.de</option>
-                <option value="euc2.pure.cloud">eu-central-2 · Zurich · euc2.pure.cloud</option>
-                <option value="mec1.pure.cloud">me-central-1 · UAE · mec1.pure.cloud</option>
-                <option value="aps1.pure.cloud">ap-south-1 · Mumbai · aps1.pure.cloud</option>
+                <option value="mypurecloud.ie">eu-west-1 (Ireland)</option>
+                <option value="euw2.pure.cloud">eu-west-2 (London)</option>
+                <option value="mypurecloud.de">eu-central-1 (Frankfurt)</option>
+                <option value="euc2.pure.cloud">eu-central-2 (Zurich)</option>
+                <option value="mec1.pure.cloud">me-central-1 (UAE)</option>
+                <option value="aps1.pure.cloud">ap-south-1 (Mumbai)</option>
               </select>
             </div>
             <div>
               <label for="clientIdInput"><strong>OAuth client ID</strong></label>
               <input id="clientIdInput" class="field-control" style="margin-top:7px" type="text" autocomplete="off" spellcheck="false" placeholder="Paste the Genesys Cloud OAuth client ID" />
             </div>
-            <div class="kv"><strong>Redirect URI</strong><span id="redirectUriLabel" class="tiny"></span></div>
             <div class="kv"><strong>Authentication</strong><span id="authState" class="muted">Sign in required</span></div>
             <div class="button-row">
               <button type="button" id="signInBtn" class="btn btn-primary">Sign in to Genesys Cloud</button>
               <button type="button" id="signOutBtn" class="btn btn-ghost" style="display:none">Sign out / change environment</button>
             </div>
-            <p class="tiny">The OAuth client must allow the Redirect URI shown above. Region and client ID are retained in this browser; the access token is session-only.</p>
+            <p class="tiny">Region and client ID are retained in this browser; the access token is session-only.</p>
           </div>
         </div>
 
@@ -318,7 +317,6 @@
     if (storedClient) clientId = storedClient;
     document.getElementById('regionSelect').value = selectedRegion;
     document.getElementById('clientIdInput').value = clientId;
-    document.getElementById('redirectUriLabel').textContent = REDIRECT_URI || '[not available from file://]';
   }
 
   function readConnectionInputs() {
@@ -407,24 +405,24 @@
 
   async function fetchAllWorktypes() {
     log('Loading worktypes from the authenticated organisation...', 'info');
-    const all = [];
-    let pageNumber = 1;
-    const pageSize = 100;
-    while (pageNumber <= 100) {
-      const page = await apiFetch('/api/v2/taskmanagement/worktypes?pageSize=' + pageSize + '&pageNumber=' + pageNumber);
-      const entities = extractEntities(page);
-      all.push(...entities);
-      const pageCount = Number(page.pageCount || 0);
-      const total = Number(page.total || page.totalCount || 0);
-      if (pageCount && pageNumber >= pageCount) break;
-      if (total && all.length >= total) break;
-      if (entities.length < pageSize) break;
-      pageNumber++;
-    }
-    worktypes = all.filter(w => w && w.id).sort((a, b) => worktypeName(a).localeCompare(worktypeName(b)));
+
+    // Genesys Cloud exposes worktype discovery through the query resource.
+    // POST /api/v2/taskmanagement/worktypes/query requires workitems:worktype:view.
+    const page = await apiFetch('/api/v2/taskmanagement/worktypes/query', {
+      method: 'POST',
+      body: JSON.stringify({})
+    });
+
+    const entities = extractEntities(page);
+    worktypes = entities
+      .filter(w => w && w.id)
+      .sort((a, b) => worktypeName(a).localeCompare(worktypeName(b)));
+
     renderWorktypes();
     log('Loaded ' + worktypes.length + ' worktype(s).', 'ok');
-    if (!worktypes.length) showStatus('Signed in, but no worktypes were returned for this organisation.', 'warn');
+    if (!worktypes.length) {
+      showStatus('Signed in, but no worktypes were returned. Confirm the user has workitems:worktype:view permission.', 'warn');
+    }
   }
 
   function worktypeName(w) { return (w && (w.name || w.displayName || w.label)) || (w && w.id) || 'Unnamed worktype'; }
