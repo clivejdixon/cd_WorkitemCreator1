@@ -140,6 +140,11 @@
           <h2><span class="step">2</span>Worktype</h2>
           <div class="stack">
             <div>
+              <label for="worktypeFilter"><strong>Filter worktypes</strong></label>
+              <input id="worktypeFilter" class="field-control" style="margin-top:7px" type="search" autocomplete="off" spellcheck="false" placeholder="Type part of a worktype name" disabled />
+              <div id="worktypeCount" class="tiny" style="margin-top:6px">Sign in to load worktypes.</div>
+            </div>
+            <div>
               <label for="worktypeSelect"><strong>Worktype from this organisation</strong></label>
               <select id="worktypeSelect" class="field-control" style="margin-top:7px" disabled>
                 <option value="">Sign in to load worktypes</option>
@@ -404,22 +409,55 @@
   }
 
   async function fetchAllWorktypes() {
-    log('Loading worktypes from the authenticated organisation...', 'info');
+    log('Loading all worktypes from the authenticated organisation...', 'info');
 
-    // Genesys Cloud exposes worktype discovery through the query resource.
-    // POST /api/v2/taskmanagement/worktypes/query requires workitems:worktype:view.
-    const page = await apiFetch('/api/v2/taskmanagement/worktypes/query', {
-      method: 'POST',
-      body: JSON.stringify({})
-    });
+    // The worktype query is paged. Request successive pages so large organisations
+    // are not limited to only the first result set.
+    const pageSize = 100;
+    const byId = new Map();
+    let pageNumber = 1;
+    const maxPages = 500;
 
-    const entities = extractEntities(page);
-    worktypes = entities
-      .filter(w => w && w.id)
+    while (pageNumber <= maxPages) {
+      const page = await apiFetch('/api/v2/taskmanagement/worktypes/query', {
+        method: 'POST',
+        body: JSON.stringify({ pageSize, pageNumber })
+      });
+
+      const entities = extractEntities(page).filter(w => w && w.id);
+      const before = byId.size;
+      entities.forEach(w => byId.set(w.id, w));
+      const added = byId.size - before;
+
+      const responsePageSize = Number(page.pageSize) || pageSize;
+      const responsePageNumber = Number(page.pageNumber) || pageNumber;
+      const pageCount = Number(page.pageCount || page.totalPages || 0);
+      const total = Number(page.total || page.totalCount || page.totalResults || 0);
+
+      log('Loaded worktype page ' + responsePageNumber + ' (' + entities.length + ' returned, ' + byId.size + ' unique total).', 'info');
+
+      if (!entities.length) break;
+      if (!added) {
+        log('Worktype paging returned no new records; stopping to avoid repeating the same page.', 'warn');
+        break;
+      }
+      if (total && byId.size >= total) break;
+      if (pageCount && responsePageNumber >= pageCount) break;
+      if (entities.length < responsePageSize) break;
+
+      pageNumber++;
+    }
+
+    worktypes = Array.from(byId.values())
       .sort((a, b) => worktypeName(a).localeCompare(worktypeName(b)));
 
+    const filter = document.getElementById('worktypeFilter');
+    if (filter) {
+      filter.value = '';
+      filter.disabled = !accessToken || !worktypes.length;
+    }
     renderWorktypes();
-    log('Loaded ' + worktypes.length + ' worktype(s).', 'ok');
+    log('Loaded ' + worktypes.length + ' worktype(s) in total.', 'ok');
     if (!worktypes.length) {
       showStatus('Signed in, but no worktypes were returned. Confirm the user has workitems:worktype:view permission.', 'warn');
     }
@@ -429,14 +467,30 @@
 
   function renderWorktypes() {
     const select = document.getElementById('worktypeSelect');
+    const filter = document.getElementById('worktypeFilter');
+    const count = document.getElementById('worktypeCount');
+    const currentValue = select.value;
+    const term = filter ? filter.value.trim().toLowerCase() : '';
+    const visibleWorktypes = term
+      ? worktypes.filter(w => worktypeName(w).toLowerCase().includes(term))
+      : worktypes;
+
     select.innerHTML = '<option value="">Select a worktype...</option>';
-    worktypes.forEach(w => {
+    visibleWorktypes.forEach(w => {
       const option = document.createElement('option');
       option.value = w.id;
       option.textContent = worktypeName(w);
       select.appendChild(option);
     });
+
+    if (visibleWorktypes.some(w => w.id === currentValue)) select.value = currentValue;
     select.disabled = !accessToken || !worktypes.length;
+    if (filter) filter.disabled = !accessToken || !worktypes.length;
+    if (count) {
+      count.textContent = term
+        ? 'Showing ' + visibleWorktypes.length + ' of ' + worktypes.length + ' worktypes.'
+        : worktypes.length + ' worktype(s) available.';
+    }
   }
 
   async function fetchSelectedWorktypeSchema() {
@@ -803,6 +857,11 @@
     sessionStorage.removeItem('gc_access_token');
     setConnectionLocked(false);
     setAuthState('Sign in required');
+    const worktypeFilter = document.getElementById('worktypeFilter');
+    if (worktypeFilter) {
+      worktypeFilter.value = '';
+      worktypeFilter.disabled = true;
+    }
     renderWorktypes();
     document.getElementById('worktypeLabel').textContent = 'Not selected';
     document.getElementById('schemaLabel').textContent = 'Not loaded';
@@ -830,6 +889,9 @@
     document.getElementById('signOutBtn').addEventListener('click', () => {
       clearAuthenticatedState();
       showStatus('Local sign-in session cleared. You can choose another region or client ID.', 'info');
+    });
+    document.getElementById('worktypeFilter').addEventListener('input', () => {
+      renderWorktypes();
     });
     document.getElementById('worktypeSelect').addEventListener('change', async () => {
       try { await fetchSelectedWorktypeSchema(); }
