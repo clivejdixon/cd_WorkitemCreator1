@@ -3,1013 +3,898 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EMEA PS — WorkItem Creator v2.0</title>
+  <title>Genesys Cloud Workitem CSV Importer</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --label-col  : 220px;
-      --radius     : 8px;
-      --border     : #d0d7de;
-      --accent     : #0061A8;
-      --accent-hov : #004e8c;
-      --accent-lite: #e8f2ff;
-      --bg         : #f6f8fa;
-      --surface    : #ffffff;
-      --text       : #1a1a2e;
-      --muted      : #6e7781;
-      --success    : #1a7f37;
-      --error      : #cf222e;
+      --bg: #f6f8fb;
+      --surface: #ffffff;
+      --surface-2: #f2f7ff;
+      --text: #182230;
+      --muted: #607086;
+      --border: #d9e2ef;
+      --accent: #0a66c2;
+      --accent-2: #6848ff;
+      --success: #1f8f4d;
+      --error: #d92d20;
+      --warning: #b54708;
+      --shadow: 0 12px 40px rgba(16, 24, 40, .08);
+      --radius: 18px;
     }
-
+    * { box-sizing: border-box; }
     body {
-      font-family : system-ui, "Segoe UI", Arial, sans-serif;
-      background  : var(--bg);
-      color       : var(--text);
-      padding     : 24px 16px;
-      min-height  : 100vh;
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #eaf4ff 0, transparent 26%),
+                  radial-gradient(circle at top right, #efeaff 0, transparent 22%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px 48px;
     }
-
-    .container { max-width: 760px; margin: 0 auto; }
-
-    h1 {
-      font-size     : 1.5rem;
-      font-weight   : 700;
-      margin-bottom : 24px;
-      padding-bottom: 12px;
-      border-bottom : 2px solid var(--accent);
-      color         : var(--accent);
-    }
-
-    .card {
-      background   : var(--surface);
-      border       : 1px solid var(--border);
-      border-radius: var(--radius);
-      padding      : 24px;
+    .container { max-width: 1240px; margin: 0 auto; }
+    .hero {
+      background: linear-gradient(135deg, #ffffff, #f7faff 45%, #f5f1ff);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 26px;
       margin-bottom: 20px;
     }
-
-    /* ── Work Type Search + Picker ───────────────────────────────── */
-    .wt-section { margin-bottom: 20px; }
-
-    .wt-row {
-      display              : grid;
-      grid-template-columns: var(--label-col) 1fr;
-      gap                  : 0 16px;
-      align-items          : start;
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px;
+      background: #eef5ff; border: 1px solid #dbe8ff; color: var(--accent);
+      border-radius: 999px; font-weight: 700; font-size: .8rem; margin-bottom: 14px;
     }
-
-    .wt-row > label {
-      font-weight : 600;
-      font-size   : 0.9rem;
-      padding-top : 10px;
-    }
-
-    .wt-picker { position: relative; }
-
-    .wt-search {
-      width        : 100%;
-      padding      : 9px 10px 9px 34px;
-      border       : 1px solid var(--border);
-      border-radius: 6px;
-      font-size    : 0.9rem;
-      background   : var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236e7781' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.415l-3.868-3.833zm-5.242 1.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E") no-repeat 10px center;
-      transition   : border-color .15s, box-shadow .15s;
-    }
-    .wt-search:focus {
-      outline     : none;
-      border-color: var(--accent);
-      box-shadow  : 0 0 0 3px rgba(0,97,168,.15);
-    }
-
-    .wt-dropdown {
-      display      : none;
-      position     : absolute;
-      top          : calc(100% + 4px);
-      left         : 0;
-      right        : 0;
-      background   : var(--surface);
-      border       : 1px solid var(--border);
-      border-radius: 6px;
-      max-height   : 220px;
-      overflow-y   : auto;
-      z-index      : 100;
-      box-shadow   : 0 4px 16px rgba(0,0,0,.12);
-    }
-    .wt-dropdown.open { display: block; }
-
-    .wt-option {
-      padding    : 9px 12px;
-      cursor     : pointer;
-      font-size  : 0.9rem;
-      transition : background .1s;
-    }
-    .wt-option:hover        { background: var(--accent-lite); }
-    .wt-option.selected     { background: var(--accent-lite); font-weight: 600; color: var(--accent); }
-    .wt-option.no-match     { color: var(--muted); cursor: default; font-style: italic; }
-    .wt-option mark         { background: #fff3a3; border-radius: 2px; padding: 0 1px; font-weight: 600; }
-
-    .wt-selected-badge {
-      display      : none;
-      margin-top   : 6px;
-      padding      : 5px 10px;
-      background   : var(--accent-lite);
-      border       : 1px solid var(--accent);
-      border-radius: 4px;
-      font-size    : 0.82rem;
-      font-weight  : 600;
-      color        : var(--accent);
-    }
-    .wt-selected-badge.visible { display: inline-block; }
-
-    /* ── Divider ─────────────────────────────────────────────────── */
-    .section-divider {
-      border    : none;
-      border-top: 1px solid var(--border);
-      margin    : 0 0 20px 0;
-    }
-
-    /* ── Status banner ───────────────────────────────────────────── */
-    #statusBanner {
-      display      : none;
-      padding      : 12px 16px;
-      border-radius: var(--radius);
-      font-size    : 0.875rem;
-      margin-bottom: 16px;
-      border       : 1px solid transparent;
-    }
-    #statusBanner.success { background:#d4f5db; border-color:var(--success); color:var(--success); }
-    #statusBanner.error   { background:#ffdcdc; border-color:var(--error);   color:var(--error);   }
-    #statusBanner.info    { background:#daeeff; border-color:var(--accent);  color:var(--accent);  }
-
-    /* ── Buttons ─────────────────────────────────────────────────── */
-    .btn {
-      padding      : 10px 22px;
-      border       : none;
-      border-radius: var(--radius);
-      font-size    : 0.95rem;
-      font-weight  : 600;
-      cursor       : pointer;
-      transition   : background .2s, transform .1s;
-    }
-    .btn-primary          { background: var(--accent);     color: #fff; }
-    .btn-primary:hover    { background: var(--accent-hov); }
-    .btn-primary:active   { transform: scale(.98); }
-    .btn-primary:disabled { background: #a0aec0; cursor: not-allowed; }
-
-    /* ── Spinner ─────────────────────────────────────────────────── */
-    .spinner {
-      display       : inline-block;
-      width         : 18px;
-      height        : 18px;
-      border        : 3px solid rgba(0,97,168,.25);
-      border-top    : 3px solid var(--accent);
-      border-radius : 50%;
-      animation     : spin .7s linear infinite;
-      vertical-align: middle;
-      margin-right  : 8px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Auth overlay ────────────────────────────────────────────── */
-    #authOverlay {
-      display        : flex;
-      flex-direction : column;
-      align-items    : center;
-      justify-content: center;
-      padding        : 40px;
-      gap            : 16px;
-      text-align     : center;
-      color          : var(--muted);
-    }
-
-    /* ── Debug log ───────────────────────────────────────────────── */
-    details.debug-panel         { margin-top: 24px; }
-    details.debug-panel summary { cursor:pointer; font-weight:600; color:var(--muted); user-select:none; padding:4px 0; }
-    #debugLog {
-      margin-top   : 8px;
-      background   : #1e1e2e;
-      color        : #cdd6f4;
-      border-radius: 6px;
-      padding      : 12px;
-      font-family  : "Cascadia Code", "Fira Code", monospace;
-      font-size    : 0.76rem;
-      max-height   : 320px;
-      overflow-y   : auto;
-      white-space  : pre-wrap;
-      word-break   : break-all;
-    }
-    .log-info  { color: #89dceb; }
-    .log-ok    { color: #a6e3a1; }
-    .log-warn  { color: #f9e2af; }
-    .log-error { color: #f38ba8; }
+    h1 { font-size: clamp(1.8rem, 2.7vw, 2.6rem); margin: 0 0 10px; line-height: 1.06; }
+    .subtitle { color: var(--muted); font-size: 1rem; line-height: 1.6; max-width: 920px; margin: 0; }
+    .status-banner { display: none; margin-bottom: 16px; border-radius: 14px; padding: 12px 14px; border: 1px solid transparent; font-weight: 600; }
+    .status-banner.info { background: #ecf4ff; color: var(--accent); border-color: #cfe0ff; }
+    .status-banner.success { background: #eafbf0; color: var(--success); border-color: #caefd5; }
+    .status-banner.error { background: #fff1f1; color: var(--error); border-color: #ffd1d1; }
+    .status-banner.warn { background: #fff6ed; color: var(--warning); border-color: #ffddb5; }
+    .layout { display: grid; grid-template-columns: 400px 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 1050px) { .layout { grid-template-columns: 1fr; } }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; }
+    .card h2 { margin: 0 0 14px; font-size: 1.05rem; }
+    .stack { display: grid; gap: 14px; }
+    .muted { color: var(--muted); }
+    .tiny { color: var(--muted); font-size: .82rem; line-height: 1.5; }
+    .kv { display: grid; grid-template-columns: 140px 1fr; gap: 10px; font-size: .92rem; align-items: center; }
+    .kv strong { color: var(--text); }
+    .button-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn { border: none; border-radius: 12px; padding: 12px 18px; font-weight: 700; cursor: pointer; transition: transform .14s ease, box-shadow .14s ease, opacity .14s ease; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+    .btn-primary { color: white; background: linear-gradient(135deg, var(--accent), #3888de); box-shadow: 0 8px 24px rgba(10,102,194,.18); }
+    .btn-secondary { color: var(--accent); background: #edf5ff; border: 1px solid #d4e5ff; }
+    .btn-ghost { color: var(--muted); background: #f8fafc; border: 1px solid var(--border); }
+    .dropzone { border: 2px dashed #c7d7ef; border-radius: 16px; padding: 18px; background: linear-gradient(180deg, #fafcff, #f5f9ff); }
+    .dropzone input[type="file"] { width: 100%; }
+    .field-control { width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; background: #fff; color: var(--text); font: inherit; }
+    .field-control:focus { outline: 2px solid rgba(10, 102, 194, .18); outline-offset: 2px; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .stat { background: linear-gradient(180deg, #fafcff, #f4f8ff); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+    .stat .value { font-size: 1.35rem; font-weight: 800; margin-top: 4px; }
+    .stat .label { font-size: .82rem; color: var(--muted); }
+    .progress-wrap { margin-top: 12px; }
+    .progress-bar { height: 12px; border-radius: 999px; background: #edf2fb; overflow: hidden; border: 1px solid #e0e8f5; }
+    .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent-2), #00a78e); transition: width .25s ease; }
+    .pill-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pill { padding: 7px 10px; background: #f8fbff; border: 1px solid #dbe8ff; border-radius: 999px; font-size: .8rem; color: #365a7b; }
+    .pill.ok { background: #eefbf3; border-color: #ccebd8; color: var(--success); }
+    .pill.bad { background: #fff2f1; border-color: #ffd4cf; color: var(--error); }
+    .pill.warn { background: #fff8ef; border-color: #ffdfb9; color: var(--warning); }
+    .table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 16px; }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; font-size: .88rem; }
+    thead { background: #f8fbff; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid #eef3fa; text-align: left; vertical-align: top; }
+    th { font-size: .76rem; text-transform: uppercase; letter-spacing: .03em; color: #54657a; }
+    tbody tr:hover { background: #fbfdff; }
+    .step { display: inline-flex; width: 24px; height: 24px; border-radius: 50%; align-items: center; justify-content: center; background: #edf5ff; color: var(--accent); font-size: .78rem; font-weight: 800; margin-right: 8px; }
+    details.debug-panel { margin-top: 20px; }
+    details.debug-panel summary { cursor: pointer; font-weight: 700; color: var(--muted); }
+    #debugLog { margin-top: 12px; background: #0f1728; color: #dbe8ff; border-radius: 16px; padding: 14px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; max-height: 260px; overflow: auto; white-space: pre-wrap; line-height: 1.45; }
+    .log-info { color: #a9d1ff; } .log-ok { color: #9ae6b4; } .log-warn { color: #fbd38d; } .log-error { color: #feb2b2; }
   </style>
 </head>
 <body>
-<div class="container">
+  <div class="container">
+    <section class="hero">
+      <div class="eyebrow">CSV automation · Any configured Genesys Cloud region</div>
+      <h1>Genesys Cloud Workitem CSV Importer</h1>
+      <p class="subtitle">Choose your Genesys Cloud region, enter an OAuth client ID, sign in, select a worktype from the organisation, validate its attributes against the CSV, then create workitems.</p>
+    </section>
 
-  <h1>EMEA PS &#8212; WorkItem Creator <span style="font-size:0.6em; color:var(--muted);">v2.0</span></h1>
+    <div id="statusBanner" class="status-banner" role="alert"></div>
 
-  <div id="statusBanner" role="alert"></div>
-
-  <!-- ── Main card (shown after auth) ───────────────────────────── -->
-  <div class="card" id="mainCard" style="display:none">
-
-    <!-- Work Type search + picker -->
-    <div class="wt-section">
-      <div class="wt-row">
-        <label for="wtSearch">Select Work Type:</label>
-        <div class="wt-picker" id="wtPicker">
-          <input type="text"
-                 id="wtSearch"
-                 class="wt-search"
-                 placeholder="Type to filter work types..."
-                 autocomplete="off" />
-          <div class="wt-dropdown" id="wtDropdown" role="listbox"></div>
-          <span class="wt-selected-badge" id="wtBadge"></span>
+    <div class="layout">
+      <section class="stack">
+        <div class="card">
+          <h2><span class="step">1</span>Connection</h2>
+          <div class="stack">
+            <div>
+              <label for="regionSelect"><strong>Genesys Cloud region</strong></label>
+              <select id="regionSelect" class="field-control" style="margin-top:7px">
+                <option value="mypurecloud.ie">eu-west-1 · Ireland · mypurecloud.ie</option>
+                <option value="euw2.pure.cloud">eu-west-2 · London · euw2.pure.cloud</option>
+                <option value="mypurecloud.de">eu-central-1 · Frankfurt · mypurecloud.de</option>
+                <option value="euc2.pure.cloud">eu-central-2 · Zurich · euc2.pure.cloud</option>
+                <option value="mec1.pure.cloud">me-central-1 · UAE · mec1.pure.cloud</option>
+                <option value="aps1.pure.cloud">ap-south-1 · Mumbai · aps1.pure.cloud</option>
+              </select>
+            </div>
+            <div>
+              <label for="clientIdInput"><strong>OAuth client ID</strong></label>
+              <input id="clientIdInput" class="field-control" style="margin-top:7px" type="text" autocomplete="off" spellcheck="false" placeholder="Paste the Genesys Cloud OAuth client ID" />
+            </div>
+            <div class="kv"><strong>Redirect URI</strong><span id="redirectUriLabel" class="tiny"></span></div>
+            <div class="kv"><strong>Authentication</strong><span id="authState" class="muted">Sign in required</span></div>
+            <div class="button-row">
+              <button type="button" id="signInBtn" class="btn btn-primary">Sign in to Genesys Cloud</button>
+              <button type="button" id="signOutBtn" class="btn btn-ghost" style="display:none">Sign out / change environment</button>
+            </div>
+            <p class="tiny">The OAuth client must allow the Redirect URI shown above. Region and client ID are retained in this browser; the access token is session-only.</p>
+          </div>
         </div>
-      </div>
-      <!-- Hidden field carries the selected worktype id for form submission -->
-      <input type="hidden" id="selectedWorktypeId" value="" />
+
+        <div class="card">
+          <h2><span class="step">2</span>Worktype</h2>
+          <div class="stack">
+            <div>
+              <label for="worktypeSelect"><strong>Worktype from this organisation</strong></label>
+              <select id="worktypeSelect" class="field-control" style="margin-top:7px" disabled>
+                <option value="">Sign in to load worktypes</option>
+              </select>
+            </div>
+            <div class="kv"><strong>Selected ID</strong><span id="worktypeLabel" class="tiny">Not selected</span></div>
+            <div class="kv"><strong>Schema</strong><span id="schemaLabel" class="tiny">Not loaded</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2><span class="step">3</span>CSV</h2>
+          <div class="dropzone stack">
+            <label for="csvFile"><strong>CSV file</strong></label>
+            <input type="file" id="csvFile" accept=".csv,text/csv" />
+            <p class="tiny" id="csvNote">No file selected uses the embedded ShopLeads sample CSV.</p>
+          </div>
+          <div class="button-row" style="margin-top:14px">
+            <button id="previewBtn" class="btn btn-secondary" type="button">Preview rows</button>
+            <button id="runBtn" class="btn btn-primary" type="button" disabled>Run import</button>
+            <button id="resetBtn" class="btn btn-ghost" type="button">Reset CSV</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>CSV / schema validation</h2>
+          <div id="validationSummary" class="tiny">Select a worktype to validate the CSV columns.</div>
+          <div class="pill-grid" id="fieldPills" style="margin-top:12px"></div>
+        </div>
+
+        <div class="card">
+          <h2>Import summary</h2>
+          <div class="stats">
+            <div class="stat"><div class="label">Rows loaded</div><div class="value" id="rowsLoaded">0</div></div>
+            <div class="stat"><div class="label">Created</div><div class="value" id="rowsCreated">0</div></div>
+            <div class="stat"><div class="label">Failed</div><div class="value" id="rowsFailed">0</div></div>
+          </div>
+          <div class="progress-wrap">
+            <div class="tiny" id="progressText" style="margin-bottom:8px;">Waiting to start…</div>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="stack">
+        <div class="card">
+          <h2>Worktype attributes</h2>
+          <p class="tiny" id="schemaHelp">After selecting a worktype, its schema attributes will appear here with CSV coverage.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Attribute</th><th>Type</th><th>Required</th><th>CSV</th></tr></thead>
+              <tbody id="schemaBody"><tr><td colspan="4" class="muted">No worktype schema loaded.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>CSV preview</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr id="previewHead"></tr></thead>
+              <tbody id="previewBody"><tr><td class="muted">No preview loaded yet.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
     </div>
 
-    <hr class="section-divider">
-
-    <!-- Dynamic attribute form -->
-    <form id="workItemForm" novalidate>
-      <div id="attributesContainer"></div>
-      <div id="submitRow" style="margin-top:16px; display:none">
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button type="button" id="createBtn1" class="btn btn-primary" data-count="1">
-            Create x1 Workitem
-          </button>
-          <button type="button" id="createBtn3" class="btn btn-primary" data-count="3">
-            Create x3 Workitems
-          </button>
-          <button type="button" id="createBtn5" class="btn btn-primary" data-count="5">
-            Create x5 Workitems
-          </button>
-          <button type="button" id="createBtn10" class="btn btn-primary" data-count="10">
-            Create x10 Workitems
-          </button>
-        </div>
-      </div>
-    </form>
-
+    <details class="debug-panel">
+      <summary>Debug log</summary>
+      <div id="debugLog"></div>
+    </details>
   </div>
-
-  <!-- ── Auth overlay (shown before auth) ───────────────────────── -->
-  <div class="card" id="authCard">
-    <div id="authOverlay">
-      <div class="spinner"></div>
-      <p id="authMessage">Checking authentication&#8230;</p>
-    </div>
-  </div>
-
-  <!-- ── Debug log ──────────────────────────────────────────────── -->
-  <details class="debug-panel" open>
-    <summary>&#x1F6E0; Debug Log</summary>
-    <div id="debugLog"></div>
-  </details>
-
-</div><!-- /.container -->
 
 <script>
-  /* ══════════════════════════════════════════════════════════════════
-     CONFIG
-  ══════════════════════════════════════════════════════════════════ */
-  const CLIENT_ID    = '584c1e79-568e-4d71-91ff-3e00bf01d04b';
-  const REGION       = 'euw2.pure.cloud';
-  const API_BASE     = 'https://api.' + REGION;
-  const AUTH_BASE    = 'https://login.' + REGION;
-  const REDIRECT_URI = window.location.origin + window.location.pathname;
+  const REGIONS = {
+    'mypurecloud.ie': { aws: 'eu-west-1', label: 'Ireland' },
+    'euw2.pure.cloud': { aws: 'eu-west-2', label: 'London' },
+    'mypurecloud.de': { aws: 'eu-central-1', label: 'Frankfurt' },
+    'euc2.pure.cloud': { aws: 'eu-central-2', label: 'Zurich' },
+    'mec1.pure.cloud': { aws: 'me-central-1', label: 'UAE' },
+    'aps1.pure.cloud': { aws: 'ap-south-1', label: 'Mumbai' }
+  };
+
+  const REDIRECT_URI_OVERRIDE = '';
+  const REDIRECT_URI = resolveRedirectUri();
+  const EMBEDDED_CSV_TEXT = "name,customerid_text,leadname_text,leaddescription_text,owner_text,originator_text,campaignid_text,waveid_text,status_text,reason_text,outboundcontactrecordid_text,customercontactreacheddate_datetime,shopid_text,shopdistrict_text,shoparea_text,contactfirstname_text,contactlastname_text,contactpostcode_text,contactcity_text,contactstreet_text,contacthousenumber_text,contactlanguage_text,contactphonenumber_text,contactemailaddress_text,instlomkey_text,instcountrycode_text,instpostcode_text,instcity_text,inststreet_text,insthousenumber_text,insthousenumbersuffix_text,instboxnumber_text,instblocknumber_text,instfloornumber_text,instapartmentnumber_text,instprovince_text,callbackdatetime_datetime,requestoperid_text,requestorname_text,requestoremail_text,tree_text\nShopLeads01,12345678,Andy Cap,,,,CMP0009625,WVE0010648,,,,,Shop8254,DISTS,Area03,Andy,Cap,AB1 2BG,Aberdeen,Argile Street,1,EN,+447798932341,andy@fakemail.com,,44,AB1 2BG,Aberdeen,Argile Street,1,,,,,,,,,,,\nShopLeads02,12345679,Bill Baxby,,,,CMP0009625,WVE0010648,,,,,Shop8862,DISTS,Area03,Bill,Baxby,BA2 3DC,Birmingham,Bond Street,2,EN,+447798932341,bill@fakemail.com,,44,BA2 3DC,Birmingham,Bond Street,2,,,,,,,,,,,\nShopLeads03,12345680,Carl Catcher,,,,CMP0009625,WVE0010648,,,,,Shop2771,DISWAL1,Area01,Carl,Catcher,CO3 4BG,Colchester,Cain Lane,3,EN,+447798932341,carl@fakemail.com,,44,CO3 4BG,Colchester,Cain Lane,3,,,,,,,,,,,\n";
 
   let accessToken = '';
-  let allWorkTypes = [];          // full list, used for client-side filtering
-  let selectedWorktypeId = '';    // currently chosen worktype id
+  let selectedRegion = 'mypurecloud.ie';
+  let clientId = '';
+  let targetWorktypeId = '';
+  let targetSchemaId = '';
+  let targetSchemaProperties = {};
+  let targetSchemaRequired = [];
+  let worktypes = [];
+  let datasetFields = [];
+  let datasetRows = [];
+  let importInProgress = false;
+  let validationState = { ok: false, unknownHeaders: [], missingRequired: [] };
 
-  /* ══════════════════════════════════════════════════════════════════
-     DEBUG LOGGER
-  ══════════════════════════════════════════════════════════════════ */
-  const logEl = document.getElementById('debugLog');
+  function apiBase() { return 'https://api.' + selectedRegion; }
+  function authBase() { return 'https://login.' + selectedRegion; }
 
-  function log(msg, level) {
-    level = level || 'info';
-    const ts   = new Date().toISOString().slice(11, 23);
-    const line = document.createElement('div');
-    line.className   = 'log-' + level;
-    line.textContent = '[' + ts + '] ' + msg;
-    logEl.appendChild(line);
-    logEl.scrollTop  = logEl.scrollHeight;
-    if (level === 'error') console.error(msg);
-    else if (level === 'warn') console.warn(msg);
-    else console.log(msg);
+  function resolveRedirectUri() {
+    const override = (typeof REDIRECT_URI_OVERRIDE === 'string' ? REDIRECT_URI_OVERRIDE.trim() : '');
+    if (override) return override;
+    if (window.location.protocol === 'file:') return '';
+    return window.location.origin + window.location.pathname;
   }
 
-  /* ══════════════════════════════════════════════════════════════════
-     STATUS BANNER
-  ══════════════════════════════════════════════════════════════════ */
-  function showStatus(msg, type) {
-    type = type || 'info';
-    const el         = document.getElementById('statusBanner');
-    el.textContent   = msg;
-    el.className     = type;
-    el.style.display = 'block';
-    if (type === 'success') setTimeout(function() { el.style.display = 'none'; }, 6000);
+  function requireValidRedirectUri() {
+    if (!REDIRECT_URI) {
+      log('OAuth blocked because REDIRECT_URI is empty.', 'error');
+      showStatus('Open this page from a web server so OAuth can return to it.', 'error');
+      return false;
+    }
+    return true;
   }
 
-  /* ══════════════════════════════════════════════════════════════════
-     PKCE HELPERS
-  ══════════════════════════════════════════════════════════════════ */
+  function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
   function generateCodeVerifier() {
     const arr = new Uint8Array(64);
     crypto.getRandomValues(arr);
-    return btoa(String.fromCharCode.apply(null, arr))
-      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    return btoa(String.fromCharCode.apply(null, arr)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
   }
 
   async function generateCodeChallenge(verifier) {
-    const data   = new TextEncoder().encode(verifier);
+    const data = new TextEncoder().encode(verifier);
     const digest = await crypto.subtle.digest('SHA-256', data);
-    return btoa(String.fromCharCode.apply(null, new Uint8Array(digest)))
-      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    return btoa(String.fromCharCode.apply(null, new Uint8Array(digest))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  }
+
+  function randomState() {
+    const bytes = new Uint8Array(24);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  }
+
+  function log(message, level) {
+    level = level || 'info';
+    const el = document.getElementById('debugLog');
+    const div = document.createElement('div');
+    div.className = 'log-' + level;
+    div.textContent = '[' + new Date().toLocaleTimeString() + '] ' + message;
+    el.appendChild(div);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function showStatus(message, kind) {
+    const banner = document.getElementById('statusBanner');
+    banner.textContent = message;
+    banner.className = 'status-banner ' + (kind || 'info');
+    banner.style.display = 'block';
+  }
+
+  function setAuthState(text) { document.getElementById('authState').textContent = text; }
+
+  function saveConnectionSettings() {
+    localStorage.setItem('gc_import_region', selectedRegion);
+    localStorage.setItem('gc_import_client_id', clientId);
+    sessionStorage.setItem('gc_import_region', selectedRegion);
+    sessionStorage.setItem('gc_import_client_id', clientId);
+  }
+
+  function restoreConnectionSettings() {
+    const storedRegion = sessionStorage.getItem('gc_import_region') || localStorage.getItem('gc_import_region');
+    const storedClient = sessionStorage.getItem('gc_import_client_id') || localStorage.getItem('gc_import_client_id');
+    if (storedRegion && REGIONS[storedRegion]) selectedRegion = storedRegion;
+    if (storedClient) clientId = storedClient;
+    document.getElementById('regionSelect').value = selectedRegion;
+    document.getElementById('clientIdInput').value = clientId;
+    document.getElementById('redirectUriLabel').textContent = REDIRECT_URI || '[not available from file://]';
+  }
+
+  function readConnectionInputs() {
+    selectedRegion = document.getElementById('regionSelect').value;
+    clientId = document.getElementById('clientIdInput').value.trim();
+  }
+
+  function setConnectionLocked(locked) {
+    document.getElementById('regionSelect').disabled = locked;
+    document.getElementById('clientIdInput').disabled = locked;
+    document.getElementById('signInBtn').style.display = locked ? 'none' : 'inline-flex';
+    document.getElementById('signOutBtn').style.display = locked ? 'inline-flex' : 'none';
   }
 
   async function redirectToGenesysOAuth() {
-    const verifier  = generateCodeVerifier();
+    readConnectionInputs();
+    if (!clientId) {
+      showStatus('Enter the OAuth client ID before signing in.', 'error');
+      document.getElementById('clientIdInput').focus();
+      return;
+    }
+    if (!requireValidRedirectUri()) return;
+    saveConnectionSettings();
+
+    const verifier = generateCodeVerifier();
     const challenge = await generateCodeChallenge(verifier);
+    const state = randomState();
     sessionStorage.setItem('pkce_verifier', verifier);
+    sessionStorage.setItem('oauth_state', state);
+
     const params = new URLSearchParams({
-      response_type        : 'code',
-      client_id            : CLIENT_ID,
-      redirect_uri         : REDIRECT_URI,
-      code_challenge       : challenge,
+      response_type: 'code',
+      client_id: clientId,
+      redirect_uri: REDIRECT_URI,
+      code_challenge: challenge,
       code_challenge_method: 'S256',
+      state
     });
-    log('Redirecting to Genesys PKCE auth...', 'info');
-    window.location.href = AUTH_BASE + '/oauth/authorize?' + params.toString();
+    log('Redirecting to ' + authBase() + ' using region ' + selectedRegion + '.', 'info');
+    window.location.assign(authBase() + '/oauth/authorize?' + params.toString());
   }
 
   async function exchangeCodeForToken(code) {
+    if (!requireValidRedirectUri()) throw new Error('Missing valid redirect URI for OAuth token exchange.');
     const verifier = sessionStorage.getItem('pkce_verifier');
     if (!verifier) throw new Error('PKCE verifier missing from sessionStorage.');
-    log('Exchanging authorisation code for access token...', 'info');
-    const response = await fetch(AUTH_BASE + '/oauth/token', {
-      method : 'POST',
+    const response = await fetch(authBase() + '/oauth/token', {
+      method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body   : new URLSearchParams({
-        grant_type   : 'authorization_code',
-        client_id    : CLIENT_ID,
-        code         : code,
-        redirect_uri : REDIRECT_URI,
-        code_verifier: verifier,
-      }),
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: clientId,
+        code,
+        redirect_uri: REDIRECT_URI,
+        code_verifier: verifier
+      })
     });
     const data = await response.json();
-    if (!response.ok) {
-      log('Token exchange failed (' + response.status + '): ' + JSON.stringify(data), 'error');
-      throw new Error(data.error_description || 'Token exchange failed');
-    }
+    if (!response.ok) throw new Error((data.error || 'token_error') + ': ' + (data.error_description || 'Token exchange failed'));
     sessionStorage.removeItem('pkce_verifier');
-    log('Access token obtained.', 'ok');
+    sessionStorage.removeItem('oauth_state');
     return data.access_token;
   }
 
-  /* ══════════════════════════════════════════════════════════════════
-     API FETCH WRAPPER
-  ══════════════════════════════════════════════════════════════════ */
   async function apiFetch(path, options) {
     options = options || {};
-    const url = path.startsWith('http') ? path : API_BASE + path;
-    log('--> ' + (options.method || 'GET') + ' ' + url, 'info');
+    const url = path.startsWith('http') ? path : apiBase() + path;
     const response = await fetch(url, Object.assign({}, options, {
       headers: Object.assign({
-        'Authorization': 'Bearer ' + accessToken,
-        'Accept'       : 'application/json',
-        'Content-Type' : 'application/json',
-      }, options.headers || {}),
+        Authorization: 'Bearer ' + accessToken,
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      }, options.headers || {})
     }));
     const text = await response.text();
     let data;
-    try { data = JSON.parse(text); } catch(e) { data = text; }
-    if (!response.ok) {
-      log('<-- ' + response.status + ' ' + response.statusText + ': ' + JSON.stringify(data), 'error');
-      throw new Error('API ' + response.status + ': ' + response.statusText);
-    }
-    log('<-- ' + response.status + ' OK', 'ok');
+    try { data = text ? JSON.parse(text) : {}; } catch (e) { data = text; }
+    if (!response.ok) throw new Error('API ' + response.status + ': ' + response.statusText + (data && data.message ? ' · ' + data.message : ''));
     return data;
   }
 
-  /* ══════════════════════════════════════════════════════════════════
-     DATA FUNCTIONS
+  function extractEntities(page) {
+    if (Array.isArray(page)) return page;
+    return page.entities || page.results || page.items || [];
+  }
 
-     Chain on work type selection:
-       1. fetchWorkTypes()        — list all worktypes (no filter, client-side search)
-       2. fetchWorktypeById(id)   — full worktype detail → gets schema.id
-       3. fetchSchema(schemaId)   — schema → jsonSchema.properties
-       4. createWorkItem(...)     — POST new workitem
-  ══════════════════════════════════════════════════════════════════ */
+  async function fetchAllWorktypes() {
+    log('Loading worktypes from the authenticated organisation...', 'info');
+    const all = [];
+    let pageNumber = 1;
+    const pageSize = 100;
+    while (pageNumber <= 100) {
+      const page = await apiFetch('/api/v2/taskmanagement/worktypes?pageSize=' + pageSize + '&pageNumber=' + pageNumber);
+      const entities = extractEntities(page);
+      all.push(...entities);
+      const pageCount = Number(page.pageCount || 0);
+      const total = Number(page.total || page.totalCount || 0);
+      if (pageCount && pageNumber >= pageCount) break;
+      if (total && all.length >= total) break;
+      if (entities.length < pageSize) break;
+      pageNumber++;
+    }
+    worktypes = all.filter(w => w && w.id).sort((a, b) => worktypeName(a).localeCompare(worktypeName(b)));
+    renderWorktypes();
+    log('Loaded ' + worktypes.length + ' worktype(s).', 'ok');
+    if (!worktypes.length) showStatus('Signed in, but no worktypes were returned for this organisation.', 'warn');
+  }
 
-  async function fetchWorkTypes() {
-    log('Fetching all work types...', 'info');
-    const data = await apiFetch('/api/v2/taskmanagement/worktypes/query', {
-      method: 'POST',
-      body  : JSON.stringify({
-        pageSize  : 100,
-        attributes: ['id', 'name'],
-      }),
+  function worktypeName(w) { return (w && (w.name || w.displayName || w.label)) || (w && w.id) || 'Unnamed worktype'; }
+
+  function renderWorktypes() {
+    const select = document.getElementById('worktypeSelect');
+    select.innerHTML = '<option value="">Select a worktype...</option>';
+    worktypes.forEach(w => {
+      const option = document.createElement('option');
+      option.value = w.id;
+      option.textContent = worktypeName(w);
+      select.appendChild(option);
     });
-    const entities = data.entities || [];
-    // Sort alphabetically for easier scanning
-    entities.sort(function(a, b) { return a.name.localeCompare(b.name); });
-    log('Got ' + entities.length + ' work type(s).', entities.length ? 'ok' : 'warn');
-    return entities;
+    select.disabled = !accessToken || !worktypes.length;
   }
 
-  async function fetchWorktypeById(worktypeId) {
-    log('Fetching full worktype id=' + worktypeId + '...', 'info');
-    const data = await apiFetch('/api/v2/taskmanagement/worktypes/' + worktypeId);
-    if (!data.schema || !data.schema.id) {
-      log('Worktype "' + data.name + '" has no schema.', 'warn');
-    } else {
-      log('Worktype "' + data.name + '" schema.id = ' + data.schema.id, 'ok');
+  async function fetchSelectedWorktypeSchema() {
+    const id = document.getElementById('worktypeSelect').value;
+    targetWorktypeId = '';
+    targetSchemaId = '';
+    targetSchemaProperties = {};
+    targetSchemaRequired = [];
+    document.getElementById('runBtn').disabled = true;
+    if (!id) {
+      document.getElementById('worktypeLabel').textContent = 'Not selected';
+      document.getElementById('schemaLabel').textContent = 'Not loaded';
+      renderSchemaTable();
+      refreshCsvSchemaValidation();
+      return;
     }
-    return data;
+
+    const selected = worktypes.find(w => w.id === id);
+    document.getElementById('worktypeLabel').textContent = worktypeName(selected) + ' · ' + id;
+    showStatus('Loading worktype schema...', 'info');
+    const detail = await apiFetch('/api/v2/taskmanagement/worktypes/' + encodeURIComponent(id));
+    targetWorktypeId = detail.id || id;
+    const schemaId = detail.schema && detail.schema.id;
+    if (!schemaId) throw new Error('The selected worktype does not expose a schema ID.');
+    targetSchemaId = schemaId;
+    const schema = await apiFetch('/api/v2/taskmanagement/workitems/schemas/' + encodeURIComponent(schemaId));
+    const jsonSchema = schema.jsonSchema || schema;
+    targetSchemaProperties = jsonSchema.properties || {};
+    targetSchemaRequired = Array.isArray(jsonSchema.required) ? jsonSchema.required : [];
+    document.getElementById('schemaLabel').textContent = schema.name ? schema.name + ' · ' + schemaId : schemaId;
+    renderSchemaTable();
+    refreshCsvSchemaValidation();
+    log('Loaded schema ' + schemaId + ' with ' + Object.keys(targetSchemaProperties).length + ' attribute(s).', 'ok');
   }
 
-  async function fetchSchema(schemaId) {
-    log('Fetching schema id=' + schemaId + '...', 'info');
-    const data = await apiFetch('/api/v2/taskmanagement/workitems/schemas/' + schemaId);
-    log('Schema raw: ' + JSON.stringify(data), 'info');
-    const props = (data.jsonSchema && data.jsonSchema.properties)
-                ? data.jsonSchema.properties
-                : (data.properties || null);
-    if (!props) {
-      log('WARNING: no .properties in schema response.', 'warn');
-    } else {
-      log('Schema properties: ' + Object.keys(props).join(', '), 'ok');
+  function schemaType(field) {
+    if (!field) return '';
+    if (Array.isArray(field.type)) return field.type.join(' / ');
+    if (field.type) return field.type;
+    if (field.enum) return 'enum';
+    return '';
+  }
+
+  function renderSchemaTable() {
+    const body = document.getElementById('schemaBody');
+    const names = Object.keys(targetSchemaProperties).sort();
+    if (!names.length) {
+      body.innerHTML = '<tr><td colspan="4" class="muted">No worktype schema loaded.</td></tr>';
+      return;
     }
-    return props;
+    body.innerHTML = '';
+    names.forEach(name => {
+      const field = targetSchemaProperties[name] || {};
+      const required = targetSchemaRequired.includes(name);
+      const inCsv = datasetFields.includes(name);
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td><strong>' + escapeHtml(name) + '</strong></td>' +
+        '<td>' + escapeHtml(schemaType(field)) + '</td>' +
+        '<td>' + (required ? 'Yes' : 'No') + '</td>' +
+        '<td>' + (inCsv ? 'Matched' : (required ? 'Missing' : 'Not supplied')) + '</td>';
+      body.appendChild(tr);
+    });
   }
 
-  /* ══════════════════════════════════════════════════════════════════
-     DATE FORMATTING HELPERS
+  function refreshCsvSchemaValidation() {
+    const wrap = document.getElementById('fieldPills');
+    const summary = document.getElementById('validationSummary');
+    wrap.innerHTML = '';
 
-     Genesys Cloud expects:
-       _date fields     → "YYYY-MM-DD"          (ISO 8601 date)
-       _datetime fields → "YYYY-MM-DDTHH:MM:SSZ" (ISO 8601 datetime UTC)
+    const schemaLoaded = !!targetWorktypeId && Object.keys(targetSchemaProperties).length > 0;
+    if (!datasetFields.length) {
+      summary.textContent = 'Load a CSV to validate its columns.';
+      validationState = { ok: false, unknownHeaders: [], missingRequired: [] };
+      updateRunButton();
+      renderSchemaTable();
+      return;
+    }
 
-     The browser date input returns  "YYYY-MM-DD"        (already correct)
-     The browser datetime-local returns "YYYY-MM-DDTHH:MM" (needs seconds+Z)
-  ══════════════════════════════════════════════════════════════════ */
+    if (!schemaLoaded) {
+      datasetFields.forEach(field => addFieldPill(wrap, field, ''));
+      summary.textContent = 'CSV loaded. Select a worktype to compare these columns with its schema.';
+      validationState = { ok: false, unknownHeaders: [], missingRequired: [] };
+      updateRunButton();
+      renderSchemaTable();
+      return;
+    }
+
+    const customHeaders = datasetFields.filter(f => f !== 'name');
+    const unknownHeaders = customHeaders.filter(f => !(f in targetSchemaProperties));
+    const missingRequired = targetSchemaRequired.filter(f => !datasetFields.includes(f));
+    datasetFields.forEach(field => {
+      if (field === 'name') addFieldPill(wrap, field + ' (workitem name)', 'ok');
+      else if (field in targetSchemaProperties) addFieldPill(wrap, field, 'ok');
+      else addFieldPill(wrap, field + ' (not in schema)', 'bad');
+    });
+
+    validationState = { ok: unknownHeaders.length === 0 && missingRequired.length === 0, unknownHeaders, missingRequired };
+    if (validationState.ok) {
+      summary.textContent = 'CSV columns match the selected worktype schema. Optional schema attributes may be omitted.';
+    } else {
+      const parts = [];
+      if (unknownHeaders.length) parts.push(unknownHeaders.length + ' CSV column(s) are not attributes on this worktype');
+      if (missingRequired.length) parts.push(missingRequired.length + ' required schema attribute(s) are missing from the CSV');
+      summary.textContent = parts.join('. ') + '. Import is disabled until the CSV is corrected.';
+    }
+    updateRunButton();
+    renderSchemaTable();
+  }
+
+  function addFieldPill(wrap, text, kind) {
+    const pill = document.createElement('span');
+    pill.className = 'pill' + (kind ? ' ' + kind : '');
+    pill.textContent = text;
+    wrap.appendChild(pill);
+  }
+
+  function updateRunButton() {
+    document.getElementById('runBtn').disabled = importInProgress || !accessToken || !targetWorktypeId || !datasetRows.length || !validationState.ok;
+  }
 
   function formatDateValue(val) {
-    // input[type=date] gives "YYYY-MM-DD" — already correct for Genesys
-    // Guard against any locale-variant (DD/MM/YYYY) just in case
     if (!val) return val;
-    // If already ISO format, return as-is
     if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
-    // Try to parse DD/MM/YYYY fallback
-    var parts = val.split('/');
+    const parts = val.split('/');
     if (parts.length === 3) return parts[2] + '-' + parts[1] + '-' + parts[0];
     return val;
   }
 
   function formatDateTimeValue(val) {
-    // input[type=datetime-local] gives "YYYY-MM-DDTHH:MM" or "YYYY-MM-DDTHH:MM:SS"
-    // Genesys needs full ISO with seconds and Z suffix
     if (!val) return val;
     if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(val)) return val + ':00Z';
     if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(val)) return val + 'Z';
     return val;
   }
 
-  /* ══════════════════════════════════════════════════════════════════
-     CREATE WORK ITEM
-  ══════════════════════════════════════════════════════════════════ */
-  async function createWorkItem(worktypeId, formAttributes) {
-    var customFields = {};
-    Object.keys(formAttributes).forEach(function(key) {
-      var value = formAttributes[key];
-      if (key === 'name' || value === '') return;
-
-      if (key.endsWith('_checkbox')) {
-        customFields[key] = (value === 'on' || value === true);
-      } else if (key.endsWith('_date')) {
-        customFields[key] = formatDateValue(value);
-      } else if (key.endsWith('_datetime')) {
-        customFields[key] = formatDateTimeValue(value);
-      } else if (key.endsWith('_integer')) {
-        var intVal = parseInt(value, 10);
-        if (!isNaN(intVal)) {
-          customFields[key] = intVal;
-        } else {
-          log('Skipping invalid integer "' + key + '": ' + value, 'warn');
-        }
-      } else if (key.endsWith('_number')) {
-        var numVal = parseFloat(value);
-        if (!isNaN(numVal)) {
-          customFields[key] = numVal;
-        } else {
-          log('Skipping invalid number "' + key + '": ' + value, 'warn');
-        }
-      } else {
-        customFields[key] = value;
-      }
-    });
-
-    var payload = {
-      typeId      : worktypeId,
-      name        : formAttributes.name,
-      customFields: customFields,
-    };
-
-    log('Creating work item: ' + JSON.stringify(payload), 'info');
-    return await apiFetch('/api/v2/taskmanagement/workitems', {
-      method: 'POST',
-      body  : JSON.stringify(payload),
-    });
+  function normalizeCsvValue(value) {
+    if (typeof value !== 'string') return value;
+    return value.replace(/\u00A0/g, ' ').trim();
   }
 
-  /* ══════════════════════════════════════════════════════════════════
-     WORK TYPE SEARCH PICKER
-  ══════════════════════════════════════════════════════════════════ */
-  function initWorkTypePicker(workTypes) {
-    allWorkTypes = workTypes;
+  function normalizeBoolean(value) {
+    const v = String(value || '').trim().toLowerCase();
+    return v === 'true' || v === '1' || v === 'yes' || v === 'y';
+  }
 
-    const searchEl   = document.getElementById('wtSearch');
-    const dropdownEl = document.getElementById('wtDropdown');
-    const badgeEl    = document.getElementById('wtBadge');
-    const hiddenEl   = document.getElementById('selectedWorktypeId');
+  function normalizeEnumValue(rawValue, allowedValues) {
+    const cleaned = normalizeCsvValue(rawValue);
+    if (!cleaned || !Array.isArray(allowedValues) || !allowedValues.length) return cleaned;
+    const exact = allowedValues.find(v => String(v) === cleaned);
+    if (exact !== undefined) return exact;
+    const lower = cleaned.toLowerCase();
+    const caseInsensitive = allowedValues.find(v => String(v).toLowerCase() === lower);
+    if (caseInsensitive !== undefined) return caseInsensitive;
+    const compact = lower.replace(/[^a-z0-9]/g, '');
+    const compactMatch = allowedValues.find(v => String(v).toLowerCase().replace(/[^a-z0-9]/g, '') === compact);
+    if (compactMatch !== undefined) return compactMatch;
+    return null;
+  }
 
-    function escapeHtml(str) {
-      return str.replace(/[&<>"']/g, function(c) {
-        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-      });
+  function parseCSV(text) {
+    const rows = [];
+    let current = '';
+    let row = [];
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      const next = text[i + 1];
+      if (ch === '"') {
+        if (inQuotes && next === '"') { current += '"'; i++; }
+        else inQuotes = !inQuotes;
+      } else if (ch === ',' && !inQuotes) {
+        row.push(current); current = '';
+      } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+        if (ch === '\r' && next === '\n') i++;
+        row.push(current); current = '';
+        if (row.some(cell => cell !== '')) rows.push(row);
+        row = [];
+      } else current += ch;
     }
-
-    function highlight(name, query) {
-      if (!query) return escapeHtml(name);
-      var idx = name.toLowerCase().indexOf(query.toLowerCase());
-      if (idx === -1) return escapeHtml(name);
-      return escapeHtml(name.slice(0, idx))
-           + '<mark>' + escapeHtml(name.slice(idx, idx + query.length)) + '</mark>'
-           + escapeHtml(name.slice(idx + query.length));
+    if (current.length || row.length) {
+      row.push(current);
+      if (row.some(cell => cell !== '')) rows.push(row);
     }
-
-    function renderDropdown(query) {
-      var filtered = query
-        ? allWorkTypes.filter(function(wt) {
-            return wt.name.toLowerCase().indexOf(query.toLowerCase()) !== -1;
-          })
-        : allWorkTypes;
-
-      dropdownEl.innerHTML = '';
-
-      if (filtered.length === 0) {
-        var noMatch = document.createElement('div');
-        noMatch.className   = 'wt-option no-match';
-        noMatch.textContent = 'No work types match "' + query + '"';
-        dropdownEl.appendChild(noMatch);
-        return;
-      }
-
-      filtered.forEach(function(wt) {
-        var item = document.createElement('div');
-        item.className      = 'wt-option' + (wt.id === selectedWorktypeId ? ' selected' : '');
-        item.setAttribute('role', 'option');
-        item.dataset.id     = wt.id;
-        item.dataset.name   = wt.name;
-        item.innerHTML      = highlight(wt.name, query);
-
-        item.addEventListener('mousedown', function(e) {
-          e.preventDefault(); // prevent blur firing before click
-          selectWorktype(wt.id, wt.name);
-        });
-
-        dropdownEl.appendChild(item);
-      });
-    }
-
-    function openDropdown() {
-      renderDropdown(searchEl.value.trim());
-      dropdownEl.classList.add('open');
-    }
-
-    function closeDropdown() {
-      dropdownEl.classList.remove('open');
-    }
-
-    searchEl.addEventListener('focus', function() { openDropdown(); });
-    searchEl.addEventListener('blur',  function() { closeDropdown(); });
-    searchEl.addEventListener('input', function() {
-      // Clear selection if user edits after picking
-      if (selectedWorktypeId) {
-        selectedWorktypeId    = '';
-        hiddenEl.value        = '';
-        badgeEl.className     = 'wt-selected-badge';
-        clearForm();
-      }
-      renderDropdown(searchEl.value.trim());
+    if (!rows.length) return { fields: [], rows: [] };
+    const fields = rows[0].map(cell => normalizeCsvValue(cell));
+    const dataRows = rows.slice(1).map(cols => {
+      const obj = {};
+      fields.forEach((field, index) => { obj[field] = normalizeCsvValue(cols[index] || ''); });
+      return obj;
     });
+    return { fields, rows: dataRows };
+  }
 
-    // Keyboard: arrow navigation + enter
-    searchEl.addEventListener('keydown', function(e) {
-      var items = dropdownEl.querySelectorAll('.wt-option:not(.no-match)');
-      var current = dropdownEl.querySelector('.wt-option.focused');
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        if (!dropdownEl.classList.contains('open')) { openDropdown(); return; }
-        var next = current ? (current.nextElementSibling || items[0]) : items[0];
-        if (current) current.classList.remove('focused');
-        if (next) next.classList.add('focused');
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        var prev = current ? (current.previousElementSibling || items[items.length - 1]) : items[items.length - 1];
-        if (current) current.classList.remove('focused');
-        if (prev) prev.classList.add('focused');
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (current) { selectWorktype(current.dataset.id, current.dataset.name); }
-      } else if (e.key === 'Escape') {
-        closeDropdown();
-      }
-    });
+  function loadEmbeddedDataset() {
+    applyDataset(parseCSV(EMBEDDED_CSV_TEXT), 'Embedded sample CSV loaded.');
+  }
 
-    // Close dropdown if clicking outside
-    document.addEventListener('click', function(e) {
-      if (!document.getElementById('wtPicker').contains(e.target)) {
-        closeDropdown();
-      }
+  function applyDataset(parsed, progressText) {
+    datasetFields = parsed.fields;
+    datasetRows = parsed.rows;
+    updatePreview();
+    updateStats(0, 0, datasetRows.length);
+    updateProgress(0, datasetRows.length, progressText);
+    refreshCsvSchemaValidation();
+    log('Loaded dataset with ' + datasetRows.length + ' row(s) and ' + datasetFields.length + ' column(s).', 'ok');
+  }
+
+  function updateStats(created, failed, loaded) {
+    document.getElementById('rowsLoaded').textContent = loaded;
+    document.getElementById('rowsCreated').textContent = created;
+    document.getElementById('rowsFailed').textContent = failed;
+  }
+
+  function updateProgress(current, total, text) {
+    document.getElementById('progressText').textContent = text;
+    document.getElementById('progressFill').style.width = total ? ((current / total) * 100).toFixed(1) + '%' : '0%';
+  }
+
+  function previewFields() { return datasetFields.slice(0, Math.min(9, datasetFields.length)); }
+
+  function buildPreviewHead() {
+    const head = document.getElementById('previewHead');
+    head.innerHTML = '';
+    ['#', ...previewFields(), 'Status'].forEach(col => {
+      const th = document.createElement('th');
+      th.textContent = col;
+      head.appendChild(th);
     });
   }
 
-  async function selectWorktype(id, name) {
-    const searchEl  = document.getElementById('wtSearch');
-    const badgeEl   = document.getElementById('wtBadge');
-    const hiddenEl  = document.getElementById('selectedWorktypeId');
-    const container = document.getElementById('attributesContainer');
-    const submitRow = document.getElementById('submitRow');
-
-    // Update UI state
-    selectedWorktypeId  = id;
-    hiddenEl.value      = id;
-    searchEl.value      = name;
-    badgeEl.textContent = '✓ ' + name;
-    badgeEl.className   = 'wt-selected-badge visible';
-    document.getElementById('wtDropdown').classList.remove('open');
-
-    clearForm();
-    container.innerHTML = '<div style="padding:10px 0; color:var(--muted)"><span class="spinner"></span> Loading attributes...</div>';
-
-    log('Selected work type: "' + name + '" id=' + id, 'info');
-
-    try {
-      var worktype = await fetchWorktypeById(id);
-      var schemaId = worktype.schema && worktype.schema.id;
-
-      if (!schemaId) {
-        log('No schema on this worktype — name field only.', 'warn');
-        container.innerHTML = '';
-        container.appendChild(buildRow('name', 'Workitem Name', 'text', true));
-        submitRow.style.display = 'block';
-        return;
-      }
-
-      var properties = await fetchSchema(schemaId);
-
-      if (!properties) {
-        container.innerHTML = '<p style="color:var(--error); font-size:0.85rem; padding:8px 0;">Schema returned no properties — check debug log.</p>';
-        return;
-      }
-
-      renderSchemaAttributes(properties);
-
-    } catch (err) {
-      container.innerHTML = '';
-      log('Error loading schema: ' + err.message, 'error');
-      showStatus('Failed to load schema: ' + err.message, 'error');
-    }
-  }
-
-  function clearForm() {
-    document.getElementById('attributesContainer').innerHTML = '';
-    document.getElementById('submitRow').style.display = 'none';
-  }
-
-  /* ══════════════════════════════════════════════════════════════════
-     FORM RENDERING
-  ══════════════════════════════════════════════════════════════════ */
-  var INPUT_STYLE = 'width:100%; padding:9px 10px; border:1px solid var(--border); border-radius:6px; font-size:0.9rem;';
-  var ROW_STYLE   = 'display:grid; grid-template-columns:var(--label-col) 1fr; gap:0 16px; align-items:center; margin-bottom:14px;';
-  var LABEL_STYLE = 'font-weight:600; font-size:0.9rem;';
-
-  function makeLabel(forId, text) {
-    var l = document.createElement('label');
-    l.setAttribute('for', forId);
-    l.style.cssText = LABEL_STYLE;
-    l.textContent   = text;
-    return l;
-  }
-
-  function buildRow(id, labelText, type, required) {
-    var row = document.createElement('div');
-    row.style.cssText = ROW_STYLE;
-    row.appendChild(makeLabel(id, labelText));
-    var inp = document.createElement('input');
-    inp.type          = type || 'text';
-    inp.id            = id;
-    inp.name          = id;
-    inp.required      = required || false;
-    inp.style.cssText = INPUT_STYLE;
-    row.appendChild(inp);
-    return row;
-  }
-
-  function buildIntegerRow(id, attr) {
-    var row = document.createElement('div');
-    row.style.cssText = ROW_STYLE;
-    row.appendChild(makeLabel(id, attr.title || id));
-    var inp = document.createElement('input');
-    inp.type          = 'number';
-    inp.id            = id;
-    inp.name          = id;
-    inp.step          = '1';
-    inp.placeholder   = 'Enter a whole number';
-    inp.style.cssText = INPUT_STYLE;
-    row.appendChild(inp);
-    return row;
-  }
-
-  function buildNumberRow(id, attr) {
-    var row = document.createElement('div');
-    row.style.cssText = ROW_STYLE;
-    row.appendChild(makeLabel(id, attr.title || id));
-    var inp = document.createElement('input');
-    inp.type          = 'number';
-    inp.id            = id;
-    inp.name          = id;
-    inp.step          = 'any';
-    inp.placeholder   = 'Enter a number';
-    inp.style.cssText = INPUT_STYLE;
-    row.appendChild(inp);
-    return row;
-  }
-
-  function buildSelectRow(id, attr) {
-    var row = document.createElement('div');
-    row.style.cssText = ROW_STYLE;
-    row.appendChild(makeLabel(id, attr.title || id));
-    var sel = document.createElement('select');
-    sel.id            = id;
-    sel.name          = id;
-    sel.required      = true;
-    sel.style.cssText = INPUT_STYLE;
-    sel.innerHTML     = '<option value="">Select...</option>';
-    (attr.enum || []).forEach(function(v) {
-      var opt = document.createElement('option');
-      opt.value = v; opt.textContent = v;
-      sel.appendChild(opt);
-    });
-    row.appendChild(sel);
-    return row;
-  }
-
-  function buildCheckboxRow(id, attr) {
-    var row = document.createElement('div');
-    row.style.cssText = 'display:flex; align-items:center; gap:10px; margin-bottom:14px;';
-    var inp = document.createElement('input');
-    inp.type          = 'checkbox';
-    inp.id            = id;
-    inp.name          = id;
-    inp.style.cssText = 'width:18px; height:18px; cursor:pointer; flex-shrink:0;';
-    row.appendChild(inp);
-    row.appendChild(makeLabel(id, attr.title || id));
-    return row;
-  }
-
-  function renderSchemaAttributes(properties) {
-    var container = document.getElementById('attributesContainer');
-    container.innerHTML = '';
-
-    // Always first: the required Workitem Name
-    container.appendChild(buildRow('name', 'Workitem Name', 'text', true));
-
-    var keys = Object.keys(properties).filter(function(k) {
-      return !k.startsWith('z_routing');
-    });
-
-    log('Rendering ' + keys.length + ' field(s): ' + keys.join(', '), 'ok');
-
-    keys.forEach(function(key) {
-      var attr = properties[key];
-      if (key.endsWith('_enum')) {
-        container.appendChild(buildSelectRow(key, attr));
-      } else if (key.endsWith('_checkbox')) {
-        container.appendChild(buildCheckboxRow(key, attr));
-      } else if (key.endsWith('_datetime')) {
-        container.appendChild(buildRow(key, attr.title || key, 'datetime-local', false));
-      } else if (key.endsWith('_date')) {
-        container.appendChild(buildRow(key, attr.title || key, 'date', false));
-      } else if (key.endsWith('_integer')) {
-        container.appendChild(buildIntegerRow(key, attr));
-      } else if (key.endsWith('_number')) {
-        container.appendChild(buildNumberRow(key, attr));
-      } else {
-        container.appendChild(buildRow(key, attr.title || key, 'text', false));
-      }
-    });
-
-    if (keys.length === 0) {
-      var note = document.createElement('p');
-      note.style.cssText = 'color:var(--muted); font-size:0.85rem; margin-bottom:14px;';
-      note.textContent   = 'No custom attributes defined for this work type.';
-      container.appendChild(note);
-    }
-
-    document.getElementById('submitRow').style.display = 'block';
-  }
-
-  /* ══════════════════════════════════════════════════════════════════
-     BULK WORKITEM CREATION
-  ══════════════════════════════════════════════════════════════════ */
-
-  /* Helper: sleep for N milliseconds */
-  function sleep(ms) {
-    return new Promise(function(resolve) { setTimeout(resolve, ms); });
-  }
-
-  /* Helper: collect form values into an object */
-  function collectFormData() {
-    var form = document.getElementById('workItemForm');
-    var formData = new FormData(form);
-    var attributes = {};
-    formData.forEach(function(value, key) { attributes[key] = value; });
-    return attributes;
-  }
-
-  /* Helper: disable all create buttons */
-  function disableAllButtons(disabled) {
-    ['createBtn1', 'createBtn3', 'createBtn5', 'createBtn10'].forEach(function(id) {
-      var btn = document.getElementById(id);
-      if (btn) btn.disabled = disabled;
-    });
-  }
-
-  /* Main handler: create N workitems with suffixes */
-  async function handleBulkCreate(count, clickedBtn) {
-    var worktypeId = document.getElementById('selectedWorktypeId').value;
-    if (!worktypeId) {
-      showStatus('Please select a Work Type first.', 'error');
+  function updatePreview(statusMap) {
+    statusMap = statusMap || {};
+    const body = document.getElementById('previewBody');
+    body.innerHTML = '';
+    buildPreviewHead();
+    if (!datasetRows.length) {
+      body.innerHTML = '<tr><td colspan="2" class="muted">No rows available.</td></tr>';
       return;
     }
+    const fields = previewFields();
+    datasetRows.slice(0, 10).forEach((row, index) => {
+      const tr = document.createElement('tr');
+      const cells = [String(index + 1)];
+      fields.forEach(field => cells.push(row[field] || ''));
+      cells.push(statusMap[index] || 'Ready');
+      tr.innerHTML = cells.map(value => '<td>' + escapeHtml(value) + '</td>').join('');
+      body.appendChild(tr);
+    });
+  }
 
-    var baseAttributes = collectFormData();
-    if (!baseAttributes.name || baseAttributes.name.trim() === '') {
-      showStatus('Workitem Name is required.', 'error');
+  function rowDisplayName(row, index) {
+    const candidates = [row.name, row.leadname_text, [row.contactfirstname_text, row.contactlastname_text].filter(Boolean).join(' '), row.customerid_text];
+    const found = candidates.find(v => normalizeCsvValue(v || ''));
+    return normalizeCsvValue(found || ('Row ' + (index + 1)));
+  }
+
+  function mapRowToPayload(row, index) {
+    const customFields = {};
+    Object.keys(row).forEach(key => {
+      if (key === 'name') return;
+      const rawValue = normalizeCsvValue(row[key]);
+      if (rawValue === '' || !(key in targetSchemaProperties)) return;
+      const schemaField = targetSchemaProperties[key] || {};
+      if (Array.isArray(schemaField.enum) && schemaField.enum.length) {
+        const mappedEnum = normalizeEnumValue(rawValue, schemaField.enum);
+        if (mappedEnum !== null) customFields[key] = mappedEnum;
+        return;
+      }
+      const type = schemaType(schemaField);
+      if (key.endsWith('_checkbox') || type === 'boolean') customFields[key] = normalizeBoolean(rawValue);
+      else if (key.endsWith('_date') || schemaField.format === 'date') customFields[key] = formatDateValue(rawValue);
+      else if (key.endsWith('_datetime') || schemaField.format === 'date-time') customFields[key] = formatDateTimeValue(rawValue);
+      else if (key.endsWith('_integer') || type === 'integer') {
+        const intVal = parseInt(rawValue, 10);
+        if (!Number.isNaN(intVal)) customFields[key] = intVal;
+      } else if (key.endsWith('_number') || type === 'number') {
+        const numVal = parseFloat(rawValue);
+        if (!Number.isNaN(numVal)) customFields[key] = numVal;
+      } else customFields[key] = rawValue;
+    });
+    return { typeId: targetWorktypeId, name: rowDisplayName(row, index), customFields };
+  }
+
+  async function createWorkItemFromRow(row, index) {
+    const payload = mapRowToPayload(row, index);
+    log('Creating ' + payload.name + ' with ' + Object.keys(payload.customFields).length + ' custom field(s).', 'info');
+    return apiFetch('/api/v2/taskmanagement/workitems', { method: 'POST', body: JSON.stringify(payload) });
+  }
+
+  async function runImport() {
+    if (importInProgress) return;
+    if (!accessToken || !targetWorktypeId || !datasetRows.length || !validationState.ok) {
+      showStatus('Complete sign-in, worktype selection and CSV/schema validation before running the import.', 'error');
       return;
     }
+    importInProgress = true;
+    updateRunButton();
+    document.getElementById('previewBtn').disabled = true;
+    document.getElementById('csvFile').disabled = true;
+    document.getElementById('worktypeSelect').disabled = true;
+    showStatus('Import started for ' + datasetRows.length + ' workitem(s)...', 'info');
 
-    var baseName = baseAttributes.name.trim();
-    var createdIds = [];
-    var failedCount = 0;
+    let created = 0;
+    let failed = 0;
+    const statuses = {};
+    updateStats(created, failed, datasetRows.length);
+    updateProgress(0, datasetRows.length, 'Starting import...');
 
-    disableAllButtons(true);
-    clickedBtn.innerHTML = '<span class="spinner"></span>Creating...';
-
-    log('Starting bulk creation: ' + count + ' workitem(s) with base name "' + baseName + '"', 'info');
-
-    for (var i = 1; i <= count; i++) {
-      var suffix = (i < 10) ? '0' + i : '' + i;
-      var itemName = baseName + ' ' + suffix;
-
-      var itemAttrs = Object.assign({}, baseAttributes);
-      itemAttrs.name = itemName;
-
-      // Update progress in status banner
-      showStatus('Creating workitem ' + i + ' of ' + count + ': ' + itemName + '...', 'info');
-
+    for (let i = 0; i < datasetRows.length; i++) {
+      const row = datasetRows[i];
+      const name = rowDisplayName(row, i);
+      statuses[i] = 'Processing';
+      updatePreview(statuses);
+      updateProgress(i, datasetRows.length, 'Preparing ' + name + '...');
       try {
-        log('[' + i + '/' + count + '] Creating: ' + itemName, 'info');
-        var result = await createWorkItem(worktypeId, itemAttrs);
-        createdIds.push({ id: result.id, name: result.name });
-        log('  ✓ Created: id=' + result.id, 'ok');
-
-        if (i < count) {
-          log('  Pausing 1 second...', 'info');
-          await sleep(1000);
-        }
+        const result = await createWorkItemFromRow(row, i);
+        created++;
+        statuses[i] = 'Created · ' + (result.id || 'OK');
+        log('Created ' + name + ' as ' + (result.id || '[no id returned]'), 'ok');
       } catch (err) {
-        failedCount++;
-        log('  ✗ Failed: ' + err.message, 'error');
+        failed++;
+        statuses[i] = 'Failed · ' + err.message;
+        log('Failed ' + name + ': ' + err.message, 'error');
       }
+      updateStats(created, failed, datasetRows.length);
+      updatePreview(statuses);
+      updateProgress(i + 1, datasetRows.length, 'Processed ' + (i + 1) + ' of ' + datasetRows.length + ' rows.');
+      await sleep(300);
     }
 
-    disableAllButtons(false);
-    clickedBtn.innerHTML = clickedBtn.getAttribute('data-original-text');
-
-    if (failedCount === 0) {
-      showStatus('✓ Created ' + createdIds.length + ' workitem(s) successfully.', 'success');
-      log('Bulk creation complete: ' + createdIds.length + ' created, 0 failed.', 'ok');
-    } else {
-      showStatus('Created ' + createdIds.length + ' workitem(s); ' + failedCount + ' failed.', 'error');
-      log('Bulk creation complete: ' + createdIds.length + ' created, ' + failedCount + ' failed.', 'warn');
-    }
-
-    // Reset form but keep worktype picker
-    document.getElementById('workItemForm').reset();
-    clearForm();
-    selectedWorktypeId = '';
-    document.getElementById('selectedWorktypeId').value = '';
-    document.getElementById('wtSearch').value           = '';
-    document.getElementById('wtBadge').className        = 'wt-selected-badge';
+    importInProgress = false;
+    document.getElementById('previewBtn').disabled = false;
+    document.getElementById('csvFile').disabled = false;
+    document.getElementById('worktypeSelect').disabled = false;
+    updateRunButton();
+    if (failed === 0) showStatus('Import finished successfully. Created ' + created + ' workitem(s).', 'success');
+    else showStatus('Import finished with ' + created + ' created and ' + failed + ' failed.', 'warn');
   }
 
-  /* Attach click handlers to all 4 buttons */
-  function initCreateButtons() {
-    ['createBtn1', 'createBtn3', 'createBtn5', 'createBtn10'].forEach(function(id) {
-      var btn = document.getElementById(id);
-      if (!btn) return;
-      btn.setAttribute('data-original-text', btn.textContent.trim());
-      btn.addEventListener('click', function() {
-        var count = parseInt(this.getAttribute('data-count'), 10);
-        handleBulkCreate(count, this);
-      });
-    });
+  async function handleCsvSelection(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) { loadEmbeddedDataset(); return; }
+    const text = await file.text();
+    const parsed = parseCSV(text);
+    applyDataset(parsed, 'Custom CSV loaded and ready.');
+    showStatus('Loaded ' + datasetRows.length + ' row(s) from ' + file.name + '.', 'info');
   }
 
-  // Initialize buttons after DOM loads (called at end of init())
+  function resetCsv() {
+    if (importInProgress) return;
+    document.getElementById('csvFile').value = '';
+    loadEmbeddedDataset();
+    showStatus('CSV reset. Embedded sample restored.', 'info');
+  }
 
+  function clearAuthenticatedState() {
+    accessToken = '';
+    targetWorktypeId = '';
+    targetSchemaId = '';
+    targetSchemaProperties = {};
+    targetSchemaRequired = [];
+    worktypes = [];
+    validationState = { ok: false, unknownHeaders: [], missingRequired: [] };
+    sessionStorage.removeItem('gc_access_token');
+    setConnectionLocked(false);
+    setAuthState('Sign in required');
+    renderWorktypes();
+    document.getElementById('worktypeLabel').textContent = 'Not selected';
+    document.getElementById('schemaLabel').textContent = 'Not loaded';
+    renderSchemaTable();
+    refreshCsvSchemaValidation();
+  }
 
-  /* ══════════════════════════════════════════════════════════════════
-     INIT
-  ══════════════════════════════════════════════════════════════════ */
+  async function initialiseAuthenticatedSession() {
+    setConnectionLocked(true);
+    setAuthState('Signed in · loading worktypes...');
+    await fetchAllWorktypes();
+    setAuthState('Signed in and ready');
+    showStatus('Authenticated. Select a worktype to load its attributes.', 'success');
+  }
+
   async function init() {
     log('App initialising...', 'info');
-    log('Redirect URI: ' + REDIRECT_URI, 'info');
+    restoreConnectionSettings();
+    loadEmbeddedDataset();
 
-    var urlParams = new URLSearchParams(window.location.search);
-    var code      = urlParams.get('code');
-    var authError = urlParams.get('error');
+    document.getElementById('signInBtn').addEventListener('click', async () => {
+      setAuthState('Redirecting to Genesys Cloud login...');
+      await redirectToGenesysOAuth();
+    });
+    document.getElementById('signOutBtn').addEventListener('click', () => {
+      clearAuthenticatedState();
+      showStatus('Local sign-in session cleared. You can choose another region or client ID.', 'info');
+    });
+    document.getElementById('worktypeSelect').addEventListener('change', async () => {
+      try { await fetchSelectedWorktypeSchema(); }
+      catch (err) {
+        console.error(err);
+        targetWorktypeId = '';
+        targetSchemaProperties = {};
+        targetSchemaRequired = [];
+        renderSchemaTable();
+        refreshCsvSchemaValidation();
+        showStatus('Worktype/schema error: ' + err.message, 'error');
+        log('Worktype/schema error: ' + err.message, 'error');
+      }
+    });
+    document.getElementById('csvFile').addEventListener('change', handleCsvSelection);
+    document.getElementById('previewBtn').addEventListener('click', () => { updatePreview(); showStatus('Preview refreshed for ' + datasetRows.length + ' row(s).', 'info'); });
+    document.getElementById('runBtn').addEventListener('click', runImport);
+    document.getElementById('resetBtn').addEventListener('click', resetCsv);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const authError = urlParams.get('error');
+    const returnedState = urlParams.get('state');
 
     if (authError) {
-      var desc = urlParams.get('error_description') || authError;
-      log('OAuth error: ' + desc, 'error');
+      const desc = urlParams.get('error_description') || authError;
+      setAuthState('Authentication error');
       showStatus('Authentication error: ' + desc, 'error');
-      document.getElementById('authMessage').textContent = 'Auth error: ' + desc;
       return;
     }
 
-    if (code) {
-      window.history.replaceState({}, document.title, window.location.origin + window.location.pathname);
-      try {
+    try {
+      if (code) {
+        const expectedState = sessionStorage.getItem('oauth_state');
+        if (!expectedState || returnedState !== expectedState) throw new Error('OAuth state validation failed. Start the sign-in process again.');
+        selectedRegion = sessionStorage.getItem('gc_import_region') || selectedRegion;
+        clientId = sessionStorage.getItem('gc_import_client_id') || clientId;
+        document.getElementById('regionSelect').value = selectedRegion;
+        document.getElementById('clientIdInput').value = clientId;
+        window.history.replaceState({}, document.title, window.location.origin + window.location.pathname);
+        setAuthState('Completing Genesys Cloud sign-in...');
         accessToken = await exchangeCodeForToken(code);
         sessionStorage.setItem('gc_access_token', accessToken);
-        showStatus('Authenticated.', 'success');
-      } catch (err) {
-        log('Token exchange error: ' + err.message, 'error');
-        showStatus('Authentication failed: ' + err.message, 'error');
-        document.getElementById('authMessage').textContent = 'Auth failed: ' + err.message;
-        return;
-      }
-    } else {
-      var cached = sessionStorage.getItem('gc_access_token');
-      if (cached) {
-        log('Reusing cached token.', 'info');
-        accessToken = cached;
       } else {
-        log('No token — starting PKCE flow.', 'info');
-        document.getElementById('authMessage').textContent = 'Redirecting to Genesys login...';
-        await redirectToGenesysOAuth();
-        return;
+        accessToken = sessionStorage.getItem('gc_access_token') || '';
       }
-    }
 
-    document.getElementById('authCard').style.display = 'none';
-    document.getElementById('mainCard').style.display = 'block';
-    showStatus('Loading work types...', 'info');
-
-    try {
-      var workTypes = await fetchWorkTypes();
-      if (!workTypes.length) {
-        showStatus('No work types found. Check permissions.', 'error');
-        return;
+      if (accessToken) await initialiseAuthenticatedSession();
+      else {
+        setConnectionLocked(false);
+        setAuthState('Sign in required');
+        showStatus('Choose a region, enter the OAuth client ID, then sign in.', 'info');
       }
-      initWorkTypePicker(workTypes);
-      initCreateButtons();
-      showStatus(workTypes.length + ' work type(s) loaded — search to select one.', 'info');
     } catch (err) {
-      log('Failed to load work types: ' + err.message, 'error');
-      showStatus('Could not load work types: ' + err.message, 'error');
-      if (err.message.indexOf('401') !== -1) {
-        log('401 — clearing token and re-authenticating.', 'warn');
-        sessionStorage.removeItem('gc_access_token');
-        await redirectToGenesysOAuth();
-      }
+      console.error(err);
+      clearAuthenticatedState();
+      setAuthState('Authentication/setup failed');
+      showStatus('Authentication/setup error: ' + err.message, 'error');
+      log('Init error: ' + err.message, 'error');
     }
   }
 
-  init();
+  document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
